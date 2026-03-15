@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { templates, categories, Template } from '@/lib/templates';
 
 export default function Home() {
@@ -11,26 +11,17 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  // API配置（存储在 localStorage）
-  const [apiKey, setApiKey] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('apiKey') || '';
-    }
-    return '';
-  });
-  const [baseUrl, setBaseUrl] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('baseUrl') || 'https://api.deepseek.com/v1';
-    }
-    return 'https://api.deepseek.com/v1';
-  });
-  const [model, setModel] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('model') || 'deepseek-chat';
-    }
-    return 'deepseek-chat';
-  });
+  const [apiKey, setApiKey] = useState('');
+  const [baseUrl, setBaseUrl] = useState('https://api.deepseek.com/v1');
+  const [model, setModel] = useState('deepseek-chat');
   const [showConfig, setShowConfig] = useState(false);
+
+  // 从 localStorage 加载配置
+  useEffect(() => {
+    setApiKey(localStorage.getItem('apiKey') || '');
+    setBaseUrl(localStorage.getItem('baseUrl') || 'https://api.deepseek.com/v1');
+    setModel(localStorage.getItem('model') || 'deepseek-chat');
+  }, []);
 
   const filteredTemplates = selectedCategory === 'all' 
     ? templates 
@@ -79,26 +70,29 @@ export default function Home() {
     setResult('');
 
     try {
-      const response = await fetch('/api/generate', {
+      // 客户端直接调用 API（需要 API 支持 CORS）
+      const response = await fetch(`${baseUrl}/chat/completions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
         body: JSON.stringify({
-          prompt: generatePrompt(),
-          apiKey,
-          baseUrl,
-          model,
+          model: model,
+          messages: [{ role: 'user', content: generatePrompt() }],
+          max_tokens: 2000,
         }),
       });
 
       const data = await response.json();
       
       if (data.error) {
-        setError(data.error);
+        setError(data.error.message || '生成失败');
       } else {
-        setResult(data.result);
+        setResult(data.choices[0]?.message?.content || '无结果');
       }
     } catch (err: any) {
-      setError(err.message || '生成失败');
+      setError(err.message || '请求失败，请检查网络或API配置');
     } finally {
       setLoading(false);
     }

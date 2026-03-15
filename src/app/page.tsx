@@ -11,10 +11,25 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  // API配置
-  const [apiKey, setApiKey] = useState('');
-  const [baseUrl, setBaseUrl] = useState('https://api.deepseek.com/v1');
-  const [model, setModel] = useState('deepseek-chat');
+  // API配置（存储在 localStorage）
+  const [apiKey, setApiKey] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('apiKey') || '';
+    }
+    return '';
+  });
+  const [baseUrl, setBaseUrl] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('baseUrl') || 'https://api.deepseek.com/v1';
+    }
+    return 'https://api.deepseek.com/v1';
+  });
+  const [model, setModel] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('model') || 'deepseek-chat';
+    }
+    return 'deepseek-chat';
+  });
   const [showConfig, setShowConfig] = useState(false);
 
   const filteredTemplates = selectedCategory === 'all' 
@@ -44,7 +59,6 @@ export default function Home() {
   const handleGenerate = async () => {
     if (!selectedTemplate) return;
     
-    // 检查必填字段
     const missingFields = selectedTemplate.variables
       .filter(v => v.required && !formData[v.name])
       .map(v => v.label);
@@ -90,13 +104,19 @@ export default function Home() {
     }
   };
 
+  const saveConfig = () => {
+    localStorage.setItem('apiKey', apiKey);
+    localStorage.setItem('baseUrl', baseUrl);
+    localStorage.setItem('model', model);
+    setShowConfig(false);
+  };
+
   const copyResult = () => {
     navigator.clipboard.writeText(result);
   };
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* Header */}
       <header className="border-b border-white/10 backdrop-blur-sm bg-black/20">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -115,7 +135,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* API Config Modal */}
       {showConfig && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-800 rounded-xl p-6 w-full max-w-md border border-white/10">
@@ -137,7 +156,6 @@ export default function Home() {
                   type="text"
                   value={baseUrl}
                   onChange={e => setBaseUrl(e.target.value)}
-                  placeholder="https://api.deepseek.com/v1"
                   className="w-full px-3 py-2 bg-slate-700 border border-white/10 rounded-lg text-white placeholder-gray-500"
                 />
               </div>
@@ -147,24 +165,16 @@ export default function Home() {
                   type="text"
                   value={model}
                   onChange={e => setModel(e.target.value)}
-                  placeholder="deepseek-chat"
                   className="w-full px-3 py-2 bg-slate-700 border border-white/10 rounded-lg text-white placeholder-gray-500"
                 />
               </div>
+              <p className="text-xs text-gray-500">
+                推荐 <a href="https://platform.deepseek.com" target="_blank" className="text-purple-400 hover:underline">DeepSeek</a>，便宜好用
+              </p>
             </div>
             <div className="mt-6 flex justify-end gap-2">
-              <button
-                onClick={() => setShowConfig(false)}
-                className="px-4 py-2 text-gray-300 hover:text-white"
-              >
-                取消
-              </button>
-              <button
-                onClick={() => setShowConfig(false)}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
-              >
-                保存
-              </button>
+              <button onClick={() => setShowConfig(false)} className="px-4 py-2 text-gray-300 hover:text-white">取消</button>
+              <button onClick={saveConfig} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg">保存</button>
             </div>
           </div>
         </div>
@@ -172,18 +182,14 @@ export default function Home() {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Left: Template Selection & Form */}
           <div className="space-y-6">
-            {/* Categories */}
             <div className="flex flex-wrap gap-2">
               {categories.map(cat => (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                    selectedCategory === cat.id
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                    selectedCategory === cat.id ? 'bg-purple-600 text-white' : 'bg-white/10 text-gray-300 hover:bg-white/20'
                   }`}
                 >
                   {cat.icon} {cat.name}
@@ -191,31 +197,25 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Template Grid */}
             <div className="grid sm:grid-cols-2 gap-4">
               {filteredTemplates.map(template => (
                 <button
                   key={template.id}
                   onClick={() => handleTemplateSelect(template)}
                   className={`p-4 rounded-xl text-left transition border ${
-                    selectedTemplate?.id === template.id
-                      ? 'bg-purple-600/30 border-purple-500'
-                      : 'bg-white/5 border-white/10 hover:bg-white/10'
+                    selectedTemplate?.id === template.id ? 'bg-purple-600/30 border-purple-500' : 'bg-white/5 border-white/10 hover:bg-white/10'
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-2xl">{template.icon}</span>
                     <span className="font-medium text-white">{template.name}</span>
-                    {template.isPremium && (
-                      <span className="px-2 py-0.5 text-xs bg-yellow-500/20 text-yellow-400 rounded">PRO</span>
-                    )}
+                    {template.isPremium && <span className="px-2 py-0.5 text-xs bg-yellow-500/20 text-yellow-400 rounded">PRO</span>}
                   </div>
                   <p className="text-sm text-gray-400">{template.description}</p>
                 </button>
               ))}
             </div>
 
-            {/* Form */}
             {selectedTemplate && (
               <div className="bg-white/5 rounded-xl p-6 border border-white/10">
                 <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
@@ -236,9 +236,7 @@ export default function Home() {
                           className="w-full px-3 py-2 bg-slate-700 border border-white/10 rounded-lg text-white"
                         >
                           <option value="">请选择</option>
-                          {variable.options?.map(opt => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                          ))}
+                          {variable.options?.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                         </select>
                       ) : variable.type === 'textarea' ? (
                         <textarea
@@ -261,11 +259,7 @@ export default function Home() {
                   ))}
                 </div>
                 
-                {error && (
-                  <div className="mt-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-300 text-sm">
-                    {error}
-                  </div>
-                )}
+                {error && <div className="mt-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-300 text-sm">{error}</div>}
 
                 <button
                   onClick={handleGenerate}
@@ -280,33 +274,21 @@ export default function Home() {
                       </svg>
                       生成中...
                     </>
-                  ) : (
-                    <>✨ 生成内容</>
-                  )}
+                  ) : '✨ 生成内容'}
                 </button>
               </div>
             )}
           </div>
 
-          {/* Right: Result */}
           <div className="lg:sticky lg:top-8 h-fit">
             <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
               <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
                 <h3 className="font-medium text-white">生成结果</h3>
-                {result && (
-                  <button
-                    onClick={copyResult}
-                    className="text-sm text-purple-400 hover:text-purple-300"
-                  >
-                    📋 复制
-                  </button>
-                )}
+                {result && <button onClick={copyResult} className="text-sm text-purple-400 hover:text-purple-300">📋 复制</button>}
               </div>
               <div className="p-4 min-h-[400px] max-h-[600px] overflow-auto">
                 {result ? (
-                  <pre className="whitespace-pre-wrap text-gray-200 text-sm leading-relaxed font-sans">
-                    {result}
-                  </pre>
+                  <pre className="whitespace-pre-wrap text-gray-200 text-sm leading-relaxed font-sans">{result}</pre>
                 ) : (
                   <div className="h-full flex items-center justify-center text-gray-500">
                     <div className="text-center">

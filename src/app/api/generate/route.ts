@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateText } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,18 +12,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '请配置API Key' }, { status: 400 });
     }
 
-    // 支持自定义baseUrl（用于DeepSeek等兼容API）
-    const openaiProvider = createOpenAI({
-      apiKey,
-      baseURL: baseUrl || 'https://api.openai.com/v1',
+    // 服务端代理调用 API（解决 CORS）
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: model || 'deepseek-chat',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 2000,
+      }),
     });
 
-    const { text } = await generateText({
-      model: openaiProvider(model || 'gpt-3.5-turbo'),
-      prompt,
-    });
+    const data = await response.json();
 
-    return NextResponse.json({ result: text });
+    if (data.error) {
+      return NextResponse.json({ error: data.error.message || '生成失败' }, { status: 400 });
+    }
+
+    return NextResponse.json({ result: data.choices[0]?.message?.content || '无结果' });
   } catch (error: any) {
     console.error('生成错误:', error);
     return NextResponse.json(

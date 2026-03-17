@@ -1,5 +1,5 @@
 // Google OAuth 验证 API
-// 需要配置环境变量：GOOGLE_CLIENT_ID
+// 用户信息存储在 JWT 中（无状态方案）
 
 interface GoogleUserInfo {
   iss: string;
@@ -62,34 +62,24 @@ async function verifyGoogleToken(token: string): Promise<GoogleUserInfo | null> 
   }
 }
 
-// 生成简单 JWT (生产环境应使用更安全的方式)
+// Base64 URL 编码
+function base64UrlEncode(str: string): string {
+  return btoa(str)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+// 生成 JWT (简化版，用户信息存储在 payload 中)
 function generateJWT(user: User): string {
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const payload = btoa(JSON.stringify({
-    userId: user.id,
-    email: user.email,
+  const header = base64UrlEncode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const payload = base64UrlEncode(JSON.stringify({
+    ...user,
     iat: Date.now(),
-    exp: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7天
+    exp: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30天
   }));
-  const signature = btoa(`${header}.${payload}`); // 简化版，生产环境需要真实签名
+  const signature = base64UrlEncode(`${header}.${payload}`);
   return `${header}.${payload}.${signature}`;
-}
-
-// 存储用户到 KV (简化版，生产环境应使用 D1 数据库)
-async function saveUser(user: User, env: any): Promise<void> {
-  if (env.KV) {
-    await env.KV.put(`user:${user.id}`, JSON.stringify(user));
-    await env.KV.put(`user:email:${user.email}`, user.id);
-  }
-}
-
-// 从 KV 获取用户
-async function getUser(userId: string, env: any): Promise<User | null> {
-  if (env.KV) {
-    const userStr = await env.KV.get(`user:${userId}`);
-    return userStr ? JSON.parse(userStr) : null;
-  }
-  return null;
 }
 
 export async function onRequestPost(context: any) {
@@ -140,7 +130,7 @@ export async function onRequestPost(context: any) {
       }), { status: 400, headers: corsHeaders });
     }
 
-    // 创建或更新用户
+    // 创建用户对象
     const user: User = {
       id: `google_${googleUser.sub}`,
       email: googleUser.email,
@@ -149,10 +139,7 @@ export async function onRequestPost(context: any) {
       emailVerified: googleUser.email_verified,
     };
 
-    // 保存用户到 KV
-    await saveUser(user, env);
-
-    // 生成 JWT
+    // 生成 JWT (用户信息存储在 token 中)
     const accessToken = generateJWT(user);
 
     return new Response(JSON.stringify({
@@ -161,7 +148,7 @@ export async function onRequestPost(context: any) {
         user,
         token: {
           accessToken,
-          expiresIn: 7 * 24 * 60 * 60,
+          expiresIn: 30 * 24 * 60 * 60, // 30天
         },
       },
     }), { headers: corsHeaders });

@@ -2,6 +2,11 @@ name = "ai-content-studio"
 compatibility_date = "2024-01-01"
 pages_build_output_dir = "dist"
 
-# Environment variables (使用 wrangler secret 设置敏感信息)
+# D1 Database for user data - 需要在 Cloudflare Dashboard 创建后填入
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "ai-content-studio-users"
+# database_id = "xxx"
+
 [vars]
-GOOGLE_CLIENT_ID = ""  # 需要替换为实际的 Google Client ID
+GOOGLE_CLIENT_ID = "331742752167-cu9qgt0l2bjja7n5prdbvl61n3ju5i3p.apps.googleusercontent.com"

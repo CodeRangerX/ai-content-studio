@@ -1,0 +1,12 @@
+name = "ai-content-studio"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "dist"
+
+# KV namespace for user data
+[[kv_namespaces]]
+binding = "KV"
+id = "your-kv-namespace-id"  # 需要替换为实际的 KV namespace ID
+
+# Environment variables (使用 wrangler secret 设置敏感信息)
+[vars]
+GOOGLE_CLIENT_ID = ""  # 需要替换为实际的 Google Client ID

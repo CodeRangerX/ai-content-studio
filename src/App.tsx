@@ -1,12 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { LoginPage } from './components/LoginPage';
+import { UserMenu } from './components/UserMenu';
 import { templates, categories, type Template, getTemplateName } from './lib/templates';
 import { Language, languageNames, translations } from './lib/i18n';
+import { authConfig } from './lib/auth';
 
 // ============================================
 // Header
 // ============================================
 function Header({ lang, onLangChange }: { lang: Language; onLangChange: (lang: Language) => void }) {
+  const { user, isAuthenticated, logout } = useAuth();
   const t = translations[lang];
   
   return (
@@ -40,7 +46,12 @@ function Header({ lang, onLangChange }: { lang: Language; onLangChange: (lang: L
             <div className="status-dot" />
             <span className="status-text">DEEPSEEK</span>
           </div>
-          <div className="free-badge">{t.free}</div>
+          
+          {isAuthenticated ? (
+            <UserMenu onLogout={logout} />
+          ) : (
+            <div className="free-badge">{t.free}</div>
+          )}
         </div>
       </div>
     </header>
@@ -270,9 +281,9 @@ function Particles() {
 }
 
 // ============================================
-// Main App
+// Main App Content (after login)
 // ============================================
-export default function App() {
+function AppContent() {
   const [lang, setLang] = useState<Language>('en');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
@@ -481,5 +492,46 @@ export default function App() {
         </div>
       </footer>
     </>
+  );
+}
+
+// ============================================
+// App with Auth Gate
+// ============================================
+function AppWithAuth() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const [showLogin, setShowLogin] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      setShowLogin(true);
+    }
+  }, [isLoading, isAuthenticated]);
+
+  if (isLoading) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || showLogin) {
+    return <LoginPage onSuccess={() => setShowLogin(false)} />;
+  }
+
+  return <AppContent />;
+}
+
+// ============================================
+// Main App (with providers)
+// ============================================
+export default function App() {
+  return (
+    <GoogleOAuthProvider clientId={authConfig.googleClientId}>
+      <AuthProvider>
+        <AppWithAuth />
+      </AuthProvider>
+    </GoogleOAuthProvider>
   );
 }

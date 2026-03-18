@@ -7,6 +7,9 @@ import dotenv from 'dotenv';
 // 加载环境变量
 dotenv.config();
 
+// 导入数据库初始化
+import { initDatabase } from './db/index.js';
+
 // 导入服务
 import {
   sendVerificationCode,
@@ -247,9 +250,16 @@ app.post('/api/auth/logout', (c) => {
 // ============================================
 const PORT = parseInt(process.env.PORT || '3001');
 
-serve({
-  fetch: app.fetch,
-  port: PORT,
-});
+// 初始化数据库后启动服务
+async function start() {
+  await initDatabase();
+  
+  serve({
+    fetch: app.fetch,
+    port: PORT,
+  });
 
-console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+}
+
+start();

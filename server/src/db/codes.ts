@@ -1,5 +1,4 @@
-import db from './index.js';
-import crypto from 'crypto';
+import { query, queryOne, run } from './index.js';
 
 export interface VerificationCode {
   id: number;
@@ -26,13 +25,13 @@ export function createVerificationCode(
   const expiresAt = new Date(Date.now() + expiresInMinutes * 60 * 1000).toISOString();
 
   // 删除该邮箱同类型的旧验证码
-  db.prepare('DELETE FROM verification_codes WHERE email = ? AND type = ?').run(email, type);
+  run('DELETE FROM verification_codes WHERE email = ? AND type = ?', [email, type]);
 
   // 创建新验证码
-  db.prepare(`
-    INSERT INTO verification_codes (email, code, type, expires_at)
-    VALUES (?, ?, ?, ?)
-  `).run(email, code, type, expiresAt);
+  run(
+    'INSERT INTO verification_codes (email, code, type, expires_at) VALUES (?, ?, ?, ?)',
+    [email, code, type, expiresAt]
+  );
 
   return code;
 }
@@ -43,13 +42,12 @@ export function verifyCode(
   code: string,
   type: 'register' | 'reset_password'
 ): { valid: boolean; error?: string } {
-  const stmt = db.prepare(`
-    SELECT * FROM verification_codes 
-    WHERE email = ? AND code = ? AND type = ? AND used = 0
-    ORDER BY created_at DESC LIMIT 1
-  `);
-  
-  const record = stmt.get(email, code, type) as VerificationCode | undefined;
+  const record = queryOne<any>(
+    `SELECT * FROM verification_codes 
+     WHERE email = ? AND code = ? AND type = ? AND used = 0
+     ORDER BY created_at DESC LIMIT 1`,
+    [email, code, type]
+  );
 
   if (!record) {
     return { valid: false, error: '验证码错误或已使用' };
@@ -60,20 +58,19 @@ export function verifyCode(
   }
 
   // 标记为已使用
-  db.prepare('UPDATE verification_codes SET used = 1 WHERE id = ?').run(record.id);
+  run('UPDATE verification_codes SET used = 1 WHERE id = ?', [record.id]);
 
   return { valid: true };
 }
 
 // 检查发送频率（60秒内只能发送1次）
 export function canSendCode(email: string, type: string): boolean {
-  const stmt = db.prepare(`
-    SELECT created_at FROM verification_codes 
-    WHERE email = ? AND type = ? 
-    ORDER BY created_at DESC LIMIT 1
-  `);
-  
-  const record = stmt.get(email, type) as { created_at: string } | undefined;
+  const record = queryOne<{ created_at: string }>(
+    `SELECT created_at FROM verification_codes 
+     WHERE email = ? AND type = ? 
+     ORDER BY created_at DESC LIMIT 1`,
+    [email, type]
+  );
 
   if (!record) return true;
 
@@ -86,5 +83,5 @@ export function canSendCode(email: string, type: string): boolean {
 
 // 清理过期验证码
 export function cleanupExpiredCodes(): void {
-  db.prepare("DELETE FROM verification_codes WHERE expires_at < datetime('now')").run();
+  run("DELETE FROM verification_codes WHERE expires_at < datetime('now')");
 }

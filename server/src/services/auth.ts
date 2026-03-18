@@ -70,7 +70,7 @@ export function generateRefreshToken(userId: string, rememberMe: boolean = false
 }
 
 // 验证 Access Token
-export function verifyAccessToken(token: string): { userId: string; email: string } | null {
+export function verifyAccessToken(token: string): { userId: string; email: string; name?: string; picture?: string } | null {
   try {
     return jwt.verify(token, process.env.JWT_SECRET || 'default-secret') as any;
   } catch {

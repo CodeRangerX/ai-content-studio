@@ -11,7 +11,10 @@
     "build:server": "cd server && npm run build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "install:all": "npm install && cd server && npm install"
+    "install:all": "npm install && cd server && npm install",
+    "railway:install": "npm install --prefix server --no-audit --no-fund",
+    "railway:build": "npm run --prefix server build",
+    "railway:start": "node server/dist/index.js"
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.4",

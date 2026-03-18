@@ -1,0 +1,14 @@
+# 告诉 Railway 这是一个 Node.js 项目
+# 不使用 Dockerfile，让 Railway 自动检测
+
+[nodejs]
+version = "22"
+
+[build]
+command = "cd server && npm install && npm run build"
+
+[start]
+command = "cd server && node dist/index.js"
+
+[health]
+path = "/api/health"

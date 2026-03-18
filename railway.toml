@@ -1,8 +1,7 @@
+# Railway 配置 - 只部署 server 目录
 [build]
-builder = "nixpacks"
+builder = "dockerfile"
 
 [deploy]
-startCommand = "cd server && npm run start"
+startCommand = "cd server && npm start"
 healthcheckPath = "/api/health"
-healthcheckTimeout = 100
-restartPolicyType = "on_failure"

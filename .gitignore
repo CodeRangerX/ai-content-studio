@@ -23,3 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
+server/data/

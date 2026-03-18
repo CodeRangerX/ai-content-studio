@@ -1,26 +1,23 @@
-// 模板多语言配置
 import { Language } from './i18n';
 
 // 模板变量类型
 export interface TemplateVariable {
   name: string;
+  label: string;
   type: 'text' | 'select' | 'textarea';
   required: boolean;
-  // 多语言标签和占位符
-  labels: Record<Language, string>;
-  placeholders?: Record<Language, string>;
-  options?: { value: string; labels: Record<Language, string> }[];
+  placeholder?: string;
+  options?: { value: string; label: string }[];
 }
 
 // 模板类型
 export interface Template {
   id: string;
   category: string;
+  name: string;
+  description: string;
   icon: string;
   isPremium?: boolean;
-  // 多语言名称和描述
-  names: Record<Language, string>;
-  descriptions: Record<Language, string>;
   variables: TemplateVariable[];
   promptTemplate: string;
 }
@@ -41,167 +38,50 @@ export const categories = [
   { id: 'content', name: '内容' }
 ];
 
-// 辅助函数：根据语言获取模板信息
-export function getTemplateName(template: Template, lang: Language): string {
-  return template.names[lang] || template.names.en;
-}
-
-export function getTemplateDescription(template: Template, lang: Language): string {
-  return template.descriptions[lang] || template.descriptions.en;
-}
-
-export function getVariableLabel(variable: TemplateVariable, lang: Language): string {
-  return variable.labels[lang] || variable.labels.en;
-}
-
-export function getVariablePlaceholder(variable: TemplateVariable, lang: Language): string | undefined {
-  return variable.placeholders?.[lang] || variable.placeholders?.en;
-}
-
-export function getOptionLabel(option: { value: string; labels: Record<Language, string> }, lang: Language): string {
-  return option.labels[lang] || option.labels.en;
-}
-
-// 语言指令映射
-export const languageInstructions: Record<Language, string> = {
-  zh: '请用中文输出所有内容。',
-  en: 'Please output all content in English.',
-  fr: 'Veuillez produire tout le contenu en français.',
-  ru: 'Пожалуйста, выводите весь контент на русском языке.',
-  ja: 'すべてのコンテンツを日本語で出力してください。',
-  ko: '모든 콘텐츠를 한국어로 출력해 주세요.',
-  de: 'Bitte geben Sie alle Inhalte auf Deutsch aus.',
-  es: 'Por favor, produce todo el contenido en español.'
-};
-
-// 精选模板列表（重新设计）
+// 模板列表
 export const templates: Template[] = [
   // ==================== 社媒文案 ====================
   {
     id: 'x-post',
     category: 'social',
-    icon: '𝕏',
-    names: {
-      zh: '推特文案',
-      en: 'X / Twitter Post',
-      fr: 'Post X / Twitter',
-      ru: 'Пост в X / Twitter',
-      ja: 'X/Twitter投稿',
-      ko: 'X/Twitter 게시물',
-      de: 'X / Twitter Beitrag',
-      es: 'Post de X / Twitter'
-    },
-    descriptions: {
-      zh: '生成病毒式传播的推文',
-      en: 'Generate viral tweets that engage and convert',
-      fr: 'Générez des tweets viraux',
-      ru: 'Создайте вирусные твиты',
-      ja: 'バズるツイートを生成',
-      ko: '바이럴 트윗 생성',
-      de: 'Erstellen Sie virale Tweets',
-      es: 'Genera tweets virales'
-    },
+    name: 'X / Twitter Post',
+    description: 'Generate viral tweets that engage and convert',
+    icon: '🐦',
     variables: [
-      { 
-        name: 'topic', 
-        type: 'text', 
-        required: true,
-        labels: {
-          zh: '主题',
-          en: 'Topic',
-          fr: 'Sujet',
-          ru: 'Тема',
-          ja: 'トピック',
-          ko: '주제',
-          de: 'Thema',
-          es: 'Tema'
-        },
-        placeholders: {
-          zh: '例如：AI工具、生产力、科技新闻',
-          en: 'e.g., AI tools, productivity, tech news',
-          fr: 'ex: outils IA, productivité',
-          ru: 'напр.: AI инструменты',
-          ja: '例：AIツール、生産性',
-          ko: '예: AI 도구, 생산성',
-          de: 'z.B. AI-Tools, Produktivität',
-          es: 'ej: herramientas IA'
-        }
-      },
-      { 
-        name: 'tone', 
-        type: 'select', 
-        required: true,
-        labels: {
-          zh: '语气',
-          en: 'Tone',
-          fr: 'Ton',
-          ru: 'Тон',
-          ja: 'トーン',
-          ko: '어조',
-          de: 'Ton',
-          es: 'Tono'
-        },
-        options: [
-          { value: 'professional', labels: { zh: '专业', en: 'Professional', fr: 'Professionnel', ru: 'Профессиональный', ja: 'プロフェッショナル', ko: '전문적', de: 'Professionell', es: 'Profesional' } },
-          { value: 'casual', labels: { zh: '随意', en: 'Casual', fr: 'Décontracté', ru: 'Небрежный', ja: 'カジュアル', ko: '캐주얼', de: 'Locker', es: 'Casual' } },
-          { value: 'humorous', labels: { zh: '幽默', en: 'Humorous', fr: 'Humoristique', ru: 'Юмористический', ja: 'ユーモラス', ko: '유머러스', de: 'Humorvoll', es: 'Humorístico' } },
-          { value: 'provocative', labels: { zh: '挑衅', en: 'Provocative', fr: 'Provocant', ru: 'Провокационный', ja: '挑発的', ko: '도발적', de: 'Provokant', es: 'Provocador' } },
-          { value: 'inspirational', labels: { zh: '励志', en: 'Inspirational', fr: 'Inspirant', ru: 'Вдохновляющий', ja: 'インスピレーショナル', ko: '영감을 주는', de: 'Inspirierend', es: 'Inspirador' } },
-        ]
-      },
-      { 
-        name: 'goal', 
-        type: 'select', 
-        required: true,
-        labels: {
-          zh: '目标',
-          en: 'Goal',
-          fr: 'Objectif',
-          ru: 'Цель',
-          ja: '目的',
-          ko: '목표',
-          de: 'Ziel',
-          es: 'Objetivo'
-        },
-        options: [
-          { value: 'engagement', labels: { zh: '互动', en: 'Engagement', fr: 'Engagement', ru: 'Вовлечённость', ja: 'エンゲージメント', ko: '참여', de: 'Engagement', es: 'Compromiso' } },
-          { value: 'awareness', labels: { zh: '品牌认知', en: 'Brand Awareness', fr: 'Notoriété', ru: 'Узнаваемость', ja: 'ブランド認知', ko: '브랜드 인지도', de: 'Markenbekanntheit', es: 'Conocimiento de marca' } },
-          { value: 'traffic', labels: { zh: '引流', en: 'Drive Traffic', fr: 'Trafic', ru: 'Трафик', ja: 'トラフィック', ko: '트래픽 유도', de: 'Traffic generieren', es: 'Generar tráfico' } },
-          { value: 'thought-leadership', labels: { zh: '思想领导', en: 'Thought Leadership', fr: 'Leadership', ru: 'Лидерство мнений', ja: '思想リーダーシップ', ko: '사상 리더십', de: 'Thought Leadership', es: 'Liderazgo de pensamiento' } },
-        ]
-      },
-      { 
-        name: 'keywords', 
-        type: 'text', 
-        required: false,
-        labels: {
-          zh: '关键词/标签',
-          en: 'Keywords/Hashtags',
-          fr: 'Mots-clés/Hashtags',
-          ru: 'Ключевые слова',
-          ja: 'キーワード/ハッシュタグ',
-          ko: '키워드/해시태그',
-          de: 'Schlüsselwörter/Hashtags',
-          es: 'Palabras clave/Hashtags'
-        },
-        placeholders: {
-          zh: '例如：#AI #科技',
-          en: 'e.g., #AI #Tech',
-          fr: 'ex: #IA #Tech',
-          ru: 'напр.: #AI #Технологии',
-          ja: '例：#AI #テック',
-          ko: '예: #AI #테크',
-          de: 'z.B. #AI #Tech',
-          es: 'ej: #IA #Tech'
-        }
-      },
+      { name: 'topic', label: 'Topic', type: 'text', required: true, placeholder: 'e.g., AI tools, productivity, tech news' },
+      { name: 'tone', label: 'Tone', type: 'select', required: true, options: [
+        { value: 'professional', label: 'Professional' },
+        { value: 'casual', label: 'Casual' },
+        { value: 'humorous', label: 'Humorous' },
+        { value: 'provocative', label: 'Provocative' },
+        { value: 'inspirational', label: 'Inspirational' },
+      ]},
+      { name: 'goal', label: 'Goal', type: 'select', required: true, options: [
+        { value: 'engagement', label: 'Engagement' },
+        { value: 'awareness', label: 'Brand Awareness' },
+        { value: 'traffic', label: 'Drive Traffic' },
+        { value: 'thought-leadership', label: 'Thought Leadership' },
+      ]},
+      { name: 'keywords', label: 'Keywords/Hashtags', type: 'text', required: false, placeholder: 'e.g., #AI #Tech' },
     ],
     promptTemplate: `You are a viral Twitter/X content expert who writes like a real human, not a bot.
 
 【Topic】{topic}
-【Tone】{tone}
+【Tone】{tone} (Must maintain this tone throughout all tweets)
 【Goal】{goal}
 【Keywords】{keywords}
+
+【⚠️ HUMAN WRITING RULES - Avoid AI-sounding tweets】
+1. Write like you're texting a friend, not writing an essay
+2. Use lowercase intentionally, occasional typos are okay
+3. Skip "Excited to share" or "Thrilled to announce" - nobody talks like that
+4. Start mid-thought sometimes, like real people do
+5. Use sentence fragments. Not everything needs a period
+6. Add personal takes: "honestly" "imo" "ngl" "tbh"
+7. Questions work: "anyone else?" "thoughts?"
+8. Be specific with details, not generic statements
+9. One emoji max usually, unless being unhinged on purpose
+10. Threads > single tweets for storytelling
 
 【Requirements】
 1. Keep it under 280 characters (hard limit)
@@ -209,480 +89,1386 @@ export const templates: Template[] = [
 3. Include 1-2 relevant hashtags (no more)
 4. Use line breaks for readability
 5. End with a CTA that matches the goal
-6. Write like a human, not ChatGPT
+6. ALL 3 tweets must have the same 【{tone}】 tone
+7. Sound like a human, not ChatGPT
 
 【Output Format】
-Generate 3 different tweets:
+Generate 3 tweets, ALL with 【{tone}】 tone, but different content angles:
 
-1️⃣ [Hook-focused tweet]
+1️⃣ [Hook-focused tweet - {tone} tone]
 
-2️⃣ [Story/insight tweet]
+2️⃣ [Story/insight tweet - {tone} tone]
 
-3️⃣ [CTA-focused tweet]`
+3️⃣ [Question/engagement tweet - {tone} tone]
+
+📊 Best posting time suggestion: [recommendation]`,
   },
-  
+  {
+    id: 'facebook-post',
+    category: 'social',
+    name: 'Facebook Post',
+    description: 'Create engaging Facebook posts for your audience',
+    icon: '📘',
+    variables: [
+      { name: 'type', label: 'Post Type', type: 'select', required: true, options: [
+        { value: 'product', label: 'Product Promotion' },
+        { value: 'story', label: 'Brand Story' },
+        { value: 'event', label: 'Event Announcement' },
+        { value: 'educational', label: 'Educational Content' },
+        { value: 'community', label: 'Community Engagement' },
+      ]},
+      { name: 'business', label: 'Business/Brand Name', type: 'text', required: true, placeholder: 'Your brand name' },
+      { name: 'message', label: 'Key Message', type: 'text', required: true, placeholder: 'Main point you want to convey' },
+      { name: 'audience', label: 'Target Audience', type: 'text', required: false, placeholder: 'e.g., young professionals, parents' },
+    ],
+    promptTemplate: `You are a Facebook marketing expert specializing in organic engagement.
+
+【Post Type】{type}
+【Business】{business}
+【Key Message】{message}
+【Target Audience】{audience}
+
+【Requirements】
+1. Length: 80-150 words for optimal reach
+2. Include a clear hook in the first line
+3. Use emojis sparingly (2-4 max)
+4. End with a specific CTA
+5. Suggest 3-5 relevant hashtags
+
+【Output Format】
+Generate a complete Facebook post with:
+- Headline/Hook
+- Body content
+- CTA
+- Hashtags
+
+💡 Engagement tip: [specific suggestion for this post]`,
+  },
+  {
+    id: 'instagram-caption',
+    category: 'social',
+    name: 'Instagram Caption',
+    description: 'Write scroll-stopping Instagram captions',
+    icon: '📸',
+    variables: [
+      { name: 'contentType', label: 'Content Type', type: 'select', required: true, options: [
+        { value: 'lifestyle', label: 'Lifestyle' },
+        { value: 'product', label: 'Product Showcase' },
+        { value: 'behind-scenes', label: 'Behind the Scenes' },
+        { value: 'quote', label: 'Quote/Motivation' },
+        { value: 'tutorial', label: 'Tutorial/How-to' },
+        { value: 'reel', label: 'Reel Content' },
+      ]},
+      { name: 'subject', label: 'Subject', type: 'text', required: true, placeholder: 'What is the post about?' },
+      { name: 'vibe', label: 'Vibe/Aesthetic', type: 'select', required: true, options: [
+        { value: 'minimalist', label: 'Minimalist' },
+        { value: 'vibrant', label: 'Vibrant/Energetic' },
+        { value: 'cozy', label: 'Cozy/Warm' },
+        { value: 'professional', label: 'Professional' },
+        { value: 'edgy', label: 'Edgy/Bold' },
+      ]},
+      { name: 'cta', label: 'Call to Action', type: 'select', required: false, options: [
+        { value: 'save', label: 'Save for later' },
+        { value: 'share', label: 'Share with friends' },
+        { value: 'comment', label: 'Comment below' },
+        { value: 'link-bio', label: 'Link in bio' },
+        { value: 'follow', label: 'Follow for more' },
+      ]},
+    ],
+    promptTemplate: `You are an Instagram content specialist who creates viral captions.
+
+【Content Type】{contentType}
+【Subject】{subject}
+【Vibe】{vibe} (The entire caption must embody this aesthetic)
+【CTA】{cta}
+
+【Vibe Guidelines】
+- Minimalist: Clean, simple, few words, sophisticated
+- Vibrant: Energetic, colorful emojis, enthusiastic tone
+- Cozy: Warm, intimate, comforting, soft language
+- Professional: Polished, authoritative, business-appropriate
+- Edgy: Bold, provocative, unconventional, daring
+
+【Requirements】
+1. Hook in the first line that stops the scroll
+2. Use line breaks for easy reading
+3. Include 15-25 relevant hashtags
+4. Match the 【{vibe}】 vibe in tone and emoji usage
+5. Strong CTA that drives engagement
+
+【Output Format】
+[{vibe} vibe caption]
+
+[Hook/First Line]
+
+[Body content with relevant emojis - maintaining {vibe} aesthetic]
+
+[CTA]
+
+.
+.
+.
+[Hashtags - block format]
+
+🎨 Visual suggestion: [{vibe} style photo/video recommendation]`,
+  },
+  {
+    id: 'reddit-post',
+    category: 'social',
+    name: 'Reddit Post',
+    description: 'Craft authentic Reddit posts that spark discussion',
+    icon: '🤖',
+    variables: [
+      { name: 'subreddit', label: 'Subreddit', type: 'text', required: true, placeholder: 'e.g., r/technology, r/entrepreneur' },
+      { name: 'type', label: 'Post Type', type: 'select', required: true, options: [
+        { value: 'discussion', label: 'Discussion' },
+        { value: 'question', label: 'Question' },
+        { value: 'story', label: 'Story/Experience' },
+        { value: 'guide', label: 'Guide/Tutorial' },
+        { value: 'ama', label: 'AMA Style' },
+      ]},
+      { name: 'topic', label: 'Topic', type: 'text', required: true, placeholder: 'What do you want to discuss?' },
+      { name: 'background', label: 'Background Context', type: 'textarea', required: false, placeholder: 'Any relevant context...' },
+    ],
+    promptTemplate: `You are a Reddit expert who understands different subreddit cultures.
+
+【Subreddit】r/{subreddit}
+【Post Type】{type}
+【Topic】{topic}
+【Background】{background}
+
+【Requirements】
+1. Title: Clear, specific, under 120 characters
+2. First paragraph must hook readers
+3. Be authentic - Redditors hate marketing speak
+4. Include specific details for credibility
+5. End with a question or discussion prompt
+
+【Reddit Best Practices】
+- No clickbait titles
+- Show, don't tell
+- Be humble and genuine
+- Cite sources if making claims
+
+【Output Format】
+Title: [compelling title]
+
+[Body content]
+
+---
+💡 Subreddit tips: [specific advice for r/{subreddit}]
+⚠️ What to avoid: [common mistakes in this subreddit]`,
+  },
+  {
+    id: 'linkedin-post',
+    category: 'social',
+    name: 'LinkedIn Post',
+    description: 'Write professional LinkedIn content that builds authority',
+    icon: '💼',
+    variables: [
+      { name: 'type', label: 'Content Type', type: 'select', required: true, options: [
+        { value: 'insight', label: 'Industry Insight' },
+        { value: 'story', label: 'Career Story' },
+        { value: 'achievement', label: 'Achievement' },
+        { value: 'advice', label: 'Career Advice' },
+        { value: 'announcement', label: 'Company News' },
+      ]},
+      { name: 'industry', label: 'Industry', type: 'text', required: true, placeholder: 'e.g., Tech, Finance, Healthcare' },
+      { name: 'keyPoint', label: 'Key Point', type: 'text', required: true, placeholder: 'Main message you want to share' },
+      { name: 'role', label: 'Your Role', type: 'text', required: false, placeholder: 'e.g., CEO, Engineer, Consultant' },
+    ],
+    promptTemplate: `You are a LinkedIn thought leadership expert.
+
+【Content Type】{type}
+【Industry】{industry}
+【Key Point】{keyPoint}
+【Your Role】{role}
+
+【Requirements】
+1. Hook in first line (keep it under 10 words)
+2. Use the "hook, insight, value" structure
+3. Break into short paragraphs (2-3 lines max)
+4. Include a relevant question to drive comments
+5. Add 3-5 relevant hashtags at the end
+6. NO hashtag spam or clickbait
+
+【Tone】
+Professional yet conversational. Like talking to a colleague.
+
+【Output Format】
+[Hook]
+
+[Insight/Story - 3-4 short paragraphs]
+
+[Key takeaway/Question]
+
+[Hashtags]
+
+📊 Best posting time: [recommendation]
+🎯 Ideal audience: [who should see this]`,
+  },
+  {
+    id: 'tiktok-script',
+    category: 'social',
+    name: 'TikTok Script',
+    description: 'Create viral TikTok video scripts',
+    icon: '🎵',
+    variables: [
+      { name: 'topic', label: 'Topic', type: 'text', required: true, placeholder: 'What is the video about?' },
+      { name: 'style', label: 'Video Style', type: 'select', required: true, options: [
+        { value: 'storytelling', label: 'Storytelling' },
+        { value: 'tutorial', label: 'Tutorial' },
+        { value: 'reaction', label: 'Reaction' },
+        { value: 'listicle', label: 'Listicle/Tips' },
+        { value: 'trend', label: 'Trend Participation' },
+      ]},
+      { name: 'duration', label: 'Duration', type: 'select', required: true, options: [
+        { value: '15', label: '15 seconds' },
+        { value: '30', label: '30 seconds' },
+        { value: '60', label: '60 seconds' },
+        { value: '180', label: '3 minutes' },
+      ]},
+      { name: 'niche', label: 'Niche', type: 'text', required: false, placeholder: 'e.g., cooking, fitness, tech' },
+    ],
+    promptTemplate: `You are a TikTok content creator who knows what goes viral.
+
+【Topic】{topic}
+【Video Style】{style}
+【Duration】{duration} seconds
+【Niche】{niche}
+
+【Requirements】
+1. Hook MUST be in first 1-2 seconds
+2. Use pattern interrupts every 3-5 seconds
+3. End with a reason to watch again or share
+4. Include on-screen text suggestions
+5. Add trending sound recommendation
+
+【Script Format】
+⏱️ [0-3s] Hook: [attention-grabbing opening]
+📱 On-screen text: "[text]"
+
+⏱️ [3-{duration}s] Content: [script]
+📱 On-screen text: "[text]"
+🎬 Visual: [what to show]
+
+⏱️ [End] CTA: [call to action]
+
+🎵 Recommended sound: [specific sound suggestion]
+🏷️ Hashtags: [5-8 relevant hashtags]
+💡 Pro tip: [viral optimization tip]`,
+  },
+  {
+    id: 'youtube-title',
+    category: 'social',
+    name: 'YouTube Title & Description',
+    description: 'Optimize YouTube titles and descriptions for views',
+    icon: '▶️',
+    variables: [
+      { name: 'videoTopic', label: 'Video Topic', type: 'text', required: true, placeholder: 'What is your video about?' },
+      { name: 'type', label: 'Video Type', type: 'select', required: true, options: [
+        { value: 'tutorial', label: 'Tutorial/How-to' },
+        { value: 'review', label: 'Review' },
+        { value: 'vlog', label: 'Vlog' },
+        { value: 'listicle', label: 'Listicle' },
+        { value: 'analysis', label: 'Analysis/Deep Dive' },
+      ]},
+      { name: 'channel', label: 'Channel Niche', type: 'text', required: false, placeholder: 'e.g., Gaming, Tech, Education' },
+      { name: 'keywords', label: 'Target Keywords', type: 'text', required: false, placeholder: 'e.g., SEO, tutorial 2024' },
+    ],
+    promptTemplate: `You are a YouTube SEO expert and title optimizer.
+
+【Video Topic】{videoTopic}
+【Video Type】{type}
+【Channel Niche】{channel}
+【Target Keywords】{keywords}
+
+【Requirements for Title】
+1. 50-60 characters for optimal display
+2. Include main keyword near the beginning
+3. Use power words: Ultimate, Best, How to, Guide
+4. Create curiosity or promise value
+
+【Requirements for Description】
+1. First 150 characters are crucial (above fold)
+2. Include keywords naturally
+3. Add timestamps for longer videos
+4. End with CTA and links
+
+【Output Format】
+
+📹 TITLE OPTIONS:
+1. [Option 1 - SEO focused]
+2. [Option 2 - Click focused]
+3. [Option 3 - Curiosity focused]
+
+📝 DESCRIPTION:
+
+[Hook - first 150 characters]
+
+[Expanded description - 2-3 paragraphs]
+
+⏱️ TIMESTAMPS:
+0:00 - Introduction
+[Add relevant timestamps]
+
+📌 LINKS:
+- [Placeholder for links]
+
+#hashtags [5-8 relevant hashtags]
+
+💡 SEO Score: [rate the optimization]`,
+  },
+  {
+    id: 'threads-post',
+    category: 'social',
+    name: 'Threads Post',
+    description: 'Create engaging Threads content',
+    icon: '🧵',
+    variables: [
+      { name: 'topic', label: 'Topic', type: 'text', required: true, placeholder: 'What do you want to post about?' },
+      { name: 'style', label: 'Style', type: 'select', required: true, options: [
+        { value: 'hot-take', label: 'Hot Take' },
+        { value: 'story', label: 'Story Time' },
+        { value: 'question', label: 'Question' },
+        { value: 'tips', label: 'Tips Thread' },
+        { value: 'relatable', label: 'Relatable Content' },
+      ]},
+      { name: 'tone', label: 'Tone', type: 'select', required: false, options: [
+        { value: 'casual', label: 'Casual' },
+        { value: 'professional', label: 'Professional' },
+        { value: 'humorous', label: 'Humorous' },
+        { value: 'thoughtful', label: 'Thoughtful' },
+      ]},
+    ],
+    promptTemplate: `You are a Threads content creator who understands the platform's conversational nature.
+
+【Topic】{topic}
+【Style】{style}
+【Tone】{tone}
+
+【Requirements】
+1. Keep it conversational and authentic
+2. Threads audience prefers genuine content over polished
+3. Can be longer than Twitter but keep it engaging
+4. Use relevant hashtags (2-3 max)
+5. Ask questions to drive engagement
+
+【Output Format】
+Generate 3 post options:
+
+1️⃣ [Conversational approach]
+
+2️⃣ [Story/narrative approach]
+
+3️⃣ [Question/engagement approach]
+
+💡 Threads tip: [specific advice for this platform]`,
+  },
+  {
+    id: 'pinterest-pin',
+    category: 'social',
+    name: 'Pinterest Pin',
+    description: 'Create Pinterest-optimized titles and descriptions',
+    icon: '📌',
+    variables: [
+      { name: 'contentType', label: 'Content Type', type: 'select', required: true, options: [
+        { value: 'diy', label: 'DIY/Craft' },
+        { value: 'recipe', label: 'Recipe/Food' },
+        { value: 'fashion', label: 'Fashion/Style' },
+        { value: 'home', label: 'Home Decor' },
+        { value: 'blog', label: 'Blog Post' },
+        { value: 'product', label: 'Product' },
+      ]},
+      { name: 'title', label: 'Pin Topic', type: 'text', required: true, placeholder: 'What is the pin about?' },
+      { name: 'keywords', label: 'Target Keywords', type: 'text', required: false, placeholder: 'e.g., easy recipe, home decor' },
+    ],
+    promptTemplate: `You are a Pinterest SEO expert.
+
+【Content Type】{contentType}
+【Pin Topic】{title}
+【Target Keywords】{keywords}
+
+【Requirements】
+1. Title: 50-100 characters, include main keyword
+2. Description: 200-500 characters
+3. Use action words: Learn, Discover, Create
+4. Include keywords naturally
+5. End with CTA
+
+【Output Format】
+
+📌 PIN TITLE:
+[SEO-optimized title - 2 options]
+
+📝 PIN DESCRIPTION:
+[Description with keywords and CTA]
+
+🏷️ KEYWORDS:
+[10-15 keyword suggestions]
+
+📋 BOARD SUGGESTIONS:
+- [Board name 1]
+- [Board name 2]
+- [Board name 3]
+
+💡 Pinterest Tip: [specific optimization advice]`,
+  },
+
   // ==================== 电商文案 ====================
   {
     id: 'product-description',
     category: 'ecommerce',
+    name: 'Product Description',
+    description: 'Write compelling product descriptions that convert',
     icon: '🛍️',
-    names: {
-      zh: '商品描述',
-      en: 'Product Description',
-      fr: 'Description de Produit',
-      ru: 'Описание товара',
-      ja: '商品説明',
-      ko: '제품 설명',
-      de: 'Produktbeschreibung',
-      es: 'Descripción de Producto'
-    },
-    descriptions: {
-      zh: '生成吸引人的商品描述',
-      en: 'Create compelling product descriptions that sell',
-      fr: 'Créez des descriptions de produits convaincantes',
-      ru: 'Создайте убедительные описания товаров',
-      ja: '魅力的な商品説明を作成',
-      ko: '매력적인 제품 설명 생성',
-      de: 'Erstellen Sie überzeugende Produktbeschreibungen',
-      es: 'Crea descripciones de productos convincentes'
-    },
     variables: [
-      { 
-        name: 'product', 
-        type: 'text', 
-        required: true,
-        labels: {
-          zh: '商品名称',
-          en: 'Product Name',
-          fr: 'Nom du Produit',
-          ru: 'Название товара',
-          ja: '商品名',
-          ko: '제품명',
-          de: 'Produktname',
-          es: 'Nombre del Producto'
-        },
-        placeholders: {
-          zh: '例如：无线蓝牙耳机',
-          en: 'e.g., Wireless Bluetooth Headphones',
-          fr: 'ex: Écouteurs Bluetooth sans fil',
-          ru: 'напр.: Беспроводные наушники',
-          ja: '例：ワイヤレスBluetoothヘッドフォン',
-          ko: '예: 무선 블루투스 헤드폰',
-          de: 'z.B. Kabellose Bluetooth-Kopfhörer',
-          es: 'ej: Auriculares Bluetooth inalámbricos'
-        }
-      },
-      { 
-        name: 'features', 
-        type: 'textarea', 
-        required: true,
-        labels: {
-          zh: '主要特点',
-          en: 'Key Features',
-          fr: 'Caractéristiques',
-          ru: 'Ключевые особенности',
-          ja: '主な特徴',
-          ko: '주요 특징',
-          de: 'Hauptmerkmale',
-          es: 'Características Principales'
-        },
-        placeholders: {
-          zh: '例如：降噪、长续航、舒适佩戴',
-          en: 'e.g., Noise cancelling, long battery, comfortable fit',
-          fr: 'ex: Réduction de bruit, longue autonomie',
-          ru: 'напр.: Шумоподавление, долгая батарея',
-          ja: '例：ノイズキャンセリング、長時間バッテリー',
-          ko: '예: 노이즈 캔슬링, 긴 배터리 수명',
-          de: 'z.B. Geräuschunterdrückung, lange Akkulaufzeit',
-          es: 'ej: Cancelación de ruido, batería duradera'
-        }
-      },
-      { 
-        name: 'audience', 
-        type: 'text', 
-        required: false,
-        labels: {
-          zh: '目标人群',
-          en: 'Target Audience',
-          fr: 'Public Cible',
-          ru: 'Целевая аудитория',
-          ja: 'ターゲット層',
-          ko: '타겟 오디언스',
-          de: 'Zielgruppe',
-          es: 'Público Objetivo'
-        },
-        placeholders: {
-          zh: '例如：音乐爱好者、通勤族',
-          en: 'e.g., Music lovers, commuters',
-          fr: 'ex: Mélomanes, navetteurs',
-          ru: 'напр.: Меломаны, пассажиры',
-          ja: '例：音楽好き、通勤者',
-          ko: '예: 음악 애호가, 통근자',
-          de: 'z.B. Musikliebhaber, Pendler',
-          es: 'ej: Amantes de la música, viajeros'
-        }
-      },
+      { name: 'productName', label: 'Product Name', type: 'text', required: true, placeholder: 'e.g., Wireless Bluetooth Headphones' },
+      { name: 'category', label: 'Category', type: 'text', required: true, placeholder: 'e.g., Electronics, Fashion, Home' },
+      { name: 'features', label: 'Key Features', type: 'textarea', required: true, placeholder: 'List 3-5 key features' },
+      { name: 'targetAudience', label: 'Target Audience', type: 'text', required: false, placeholder: 'e.g., young professionals' },
+      { name: 'priceRange', label: 'Price Range', type: 'select', required: false, options: [
+        { value: 'budget', label: 'Budget-friendly' },
+        { value: 'mid', label: 'Mid-range' },
+        { value: 'premium', label: 'Premium/Luxury' },
+      ]},
     ],
-    promptTemplate: `You are an expert e-commerce copywriter.
+    promptTemplate: `You are an e-commerce copywriter specializing in conversion-optimized product descriptions.
 
-【Product】{product}
-【Features】{features}
-【Target Audience】{audience}
+【Product】{productName}
+【Category】{category}
+【Key Features】{features}
+【Target Audience】{targetAudience}
+【Price Range】{priceRange}
 
 【Requirements】
-1. Write compelling, benefit-focused copy
-2. Use sensory language and emotional triggers
-3. Include a clear call-to-action
-4. Format with bullet points for readability
-5. Highlight unique selling propositions
+1. Compelling headline with main benefit
+2. Highlight unique selling points
+3. Use sensory language
+4. Address potential objections
+5. Include clear CTA
 
 【Output Format】
 Generate a product description with:
-- Attention-grabbing headline
-- 2-3 key benefits with explanations
-- Feature-to-benefit translations
-- Strong closing with CTA`
+
+📌 HEADLINE
+[Attention-grabbing title]
+
+✨ KEY BENEFITS
+• [Benefit 1]
+• [Benefit 2]
+• [Benefit 3]
+
+📝 DESCRIPTION
+[2-3 paragraph product description]
+
+🎯 PERFECT FOR
+[Target audience and use cases]
+
+💡 WHY CHOOSE THIS
+[Unique selling proposition]`,
   },
-  
+  {
+    id: 'amazon-listing',
+    category: 'ecommerce',
+    name: 'Amazon Listing',
+    description: 'Create optimized Amazon product listings',
+    icon: '📦',
+    variables: [
+      { name: 'product', label: 'Product Name', type: 'text', required: true, placeholder: 'Your product name' },
+      { name: 'category', label: 'Amazon Category', type: 'text', required: true, placeholder: 'e.g., Electronics, Home & Kitchen' },
+      { name: 'features', label: 'Key Features (5)', type: 'textarea', required: true, placeholder: 'List 5 key features' },
+      { name: 'targetKeywords', label: 'Target Keywords', type: 'text', required: false, placeholder: 'Keywords to rank for' },
+    ],
+    promptTemplate: `You are an Amazon listing optimization expert.
+
+【Product】{product}
+【Category】{category}
+【Key Features】{features}
+【Target Keywords】{targetKeywords}
+
+【Requirements】
+1. Title: 150-200 characters, include main keywords
+2. Bullet points: 5 features, start with benefit
+3. Description: Use HTML formatting
+4. Backend keywords: 249 bytes max
+
+【Output Format】
+
+📌 PRODUCT TITLE (max 200 chars)
+[Optimized title with keywords]
+
+🎯 BULLET POINTS
+• [Feature 1 with benefit]
+• [Feature 2 with benefit]
+• [Feature 3 with benefit]
+• [Feature 4 with benefit]
+• [Feature 5 with benefit]
+
+📝 PRODUCT DESCRIPTION
+[HTML formatted description]
+
+🔍 BACKEND KEYWORDS
+[249 bytes of search terms]
+
+💡 A+ Content Tip: [Enhanced brand content suggestion]`,
+  },
+  {
+    id: 'email-marketing',
+    category: 'ecommerce',
+    name: 'Marketing Email',
+    description: 'Write high-converting marketing emails',
+    icon: '📧',
+    variables: [
+      { name: 'emailType', label: 'Email Type', type: 'select', required: true, options: [
+        { value: 'welcome', label: 'Welcome Email' },
+        { value: 'promotion', label: 'Promotion/Sale' },
+        { value: 'newsletter', label: 'Newsletter' },
+        { value: 'abandoned', label: 'Abandoned Cart' },
+        { value: 're-engagement', label: 'Re-engagement' },
+      ]},
+      { name: 'brand', label: 'Brand Name', type: 'text', required: true, placeholder: 'Your brand' },
+      { name: 'offer', label: 'Offer/Message', type: 'text', required: true, placeholder: 'What are you promoting?' },
+      { name: 'audience', label: 'Target Audience', type: 'text', required: false, placeholder: 'Who are you emailing?' },
+    ],
+    promptTemplate: `You are an email marketing expert with high open and click rates.
+
+【Email Type】{emailType}
+【Brand】{brand}
+【Offer/Message】{offer}
+【Target Audience】{audience}
+
+【Requirements】
+1. Subject line: Under 50 characters, create urgency
+2. Preview text: Complement subject, under 90 chars
+3. Opening hook: Personal and engaging
+4. Body: Scannable, benefit-focused
+5. CTA: Clear and action-oriented
+
+【Output Format】
+
+📧 SUBJECT LINE OPTIONS:
+1. [Option 1]
+2. [Option 2]
+3. [Option 3]
+
+👀 PREVIEW TEXT:
+[Preview text]
+
+✉️ EMAIL BODY:
+
+[Salutation]
+
+[Opening hook]
+
+[Main content - 2-3 short paragraphs]
+
+[CTA Button]
+
+[Closing]
+
+[P.S. if applicable]
+
+💡 Email Best Practice: [specific tip for this email type]`,
+  },
+
   // ==================== 内容创作 ====================
   {
     id: 'blog-outline',
     category: 'content',
+    name: 'Blog Post Outline',
+    description: 'Create SEO-optimized blog post outlines',
     icon: '📝',
-    names: {
-      zh: '博客大纲',
-      en: 'Blog Post Outline',
-      fr: 'Plan d\'Article de Blog',
-      ru: 'План статьи',
-      ja: 'ブログアウトライン',
-      ko: '블로그 글 개요',
-      de: 'Blog-Post-Gliederung',
-      es: 'Esquema de Artículo de Blog'
-    },
-    descriptions: {
-      zh: '生成结构化的博客文章大纲',
-      en: 'Generate structured blog post outlines',
-      fr: 'Générez des plans d\'articles structurés',
-      ru: 'Создайте структурированный план статьи',
-      ja: '構造化されたブログ記事のアウトラインを生成',
-      ko: '구조화된 블로그 글 개요 생성',
-      de: 'Erstellen Sie strukturierte Blog-Post-Gliederungen',
-      es: 'Genera esquemas estructurados de artículos'
-    },
     variables: [
-      { 
-        name: 'topic', 
-        type: 'text', 
-        required: true,
-        labels: {
-          zh: '主题',
-          en: 'Topic',
-          fr: 'Sujet',
-          ru: 'Тема',
-          ja: 'トピック',
-          ko: '주제',
-          de: 'Thema',
-          es: 'Tema'
-        },
-        placeholders: {
-          zh: '例如：如何提高工作效率',
-          en: 'e.g., How to boost productivity',
-          fr: 'ex: Comment améliorer la productivité',
-          ru: 'напр.: Как повысить продуктивность',
-          ja: '例：生産性を高める方法',
-          ko: '예: 생산성 향상 방법',
-          de: 'z.B. Wie man die Produktivität steigert',
-          es: 'ej: Cómo aumentar la productividad'
-        }
-      },
-      { 
-        name: 'style', 
-        type: 'select', 
-        required: true,
-        labels: {
-          zh: '风格',
-          en: 'Style',
-          fr: 'Style',
-          ru: 'Стиль',
-          ja: 'スタイル',
-          ko: '스타일',
-          de: 'Stil',
-          es: 'Estilo'
-        },
-        options: [
-          { value: 'informative', labels: { zh: '信息型', en: 'Informative', fr: 'Informatif', ru: 'Информативный', ja: '情報提供型', ko: '정보 제공형', de: 'Informativ', es: 'Informativo' } },
-          { value: 'how-to', labels: { zh: '教程型', en: 'How-to Guide', fr: 'Guide Pratique', ru: 'Инструкция', ja: 'ハウツー', ko: '가이드형', de: 'Anleitung', es: 'Guía Práctica' } },
-          { value: 'listicle', labels: { zh: '列表型', en: 'Listicle', fr: 'Liste', ru: 'Список', ja: 'リスト形式', ko: '리스트형', de: 'Liste', es: 'Lista' } },
-          { value: 'opinion', labels: { zh: '观点型', en: 'Opinion Piece', fr: 'Opinion', ru: 'Мнение', ja: 'オピニオン', ko: '의견형', de: 'Meinungsartikel', es: 'Artículo de Opinión' } },
-        ]
-      },
-      { 
-        name: 'length', 
-        type: 'select', 
-        required: false,
-        labels: {
-          zh: '篇幅',
-          en: 'Length',
-          fr: 'Longueur',
-          ru: 'Длина',
-          ja: '長さ',
-          ko: '길이',
-          de: 'Länge',
-          es: 'Longitud'
-        },
-        options: [
-          { value: 'short', labels: { zh: '短文 (800字)', en: 'Short (800 words)', fr: 'Court (800 mots)', ru: 'Короткий', ja: '短文', ko: '짧음', de: 'Kurz', es: 'Corto' } },
-          { value: 'medium', labels: { zh: '中等 (1500字)', en: 'Medium (1500 words)', fr: 'Moyen (1500 mots)', ru: 'Средний', ja: '中程度', ko: '보통', de: 'Mittel', es: 'Medio' } },
-          { value: 'long', labels: { zh: '长文 (3000字)', en: 'Long (3000 words)', fr: 'Long (3000 mots)', ru: 'Длинный', ja: '長文', ko: '김', de: 'Lang', es: 'Largo' } },
-        ]
-      },
+      { name: 'topic', label: 'Blog Topic', type: 'text', required: true, placeholder: 'What is the blog about?' },
+      { name: 'type', label: 'Content Type', type: 'select', required: true, options: [
+        { value: 'how-to', label: 'How-to Guide' },
+        { value: 'listicle', label: 'Listicle' },
+        { value: 'comparison', label: 'Comparison' },
+        { value: 'review', label: 'Review' },
+        { value: 'case-study', label: 'Case Study' },
+      ]},
+      { name: 'keywords', label: 'Target Keywords', type: 'text', required: true, placeholder: 'Main keyword to target' },
+      { name: 'length', label: 'Target Length', type: 'select', required: false, options: [
+        { value: '1000', label: '1,000 words' },
+        { value: '2000', label: '2,000 words' },
+        { value: '3000', label: '3,000+ words' },
+      ]},
     ],
-    promptTemplate: `You are an expert content strategist.
+    promptTemplate: `You are an SEO content strategist.
 
-【Topic】{topic}
-【Style】{style}
-【Length】{length}
+【Blog Topic】{topic}
+【Content Type】{type}
+【Target Keywords】{keywords}
+【Target Length】{length} words
 
 【Requirements】
-1. Create a comprehensive, SEO-friendly outline
-2. Include engaging section headers
-3. Add key points for each section
-4. Suggest internal linking opportunities
-5. Include a compelling introduction hook
+1. SEO-optimized title with keyword
+2. Meta description (155 chars)
+3. Logical H2/H3 structure
+4. Include internal/external link suggestions
+5. FAQ section for featured snippets
 
 【Output Format】
-Generate a blog post outline:
-- Catchy title options (3)
-- Meta description
-- Introduction hook
-- Main sections with subsections
-- Key points for each section
-- Conclusion with CTA`
+
+📌 SEO TITLE:
+[Optimized title]
+
+📝 META DESCRIPTION:
+[155 characters description]
+
+📋 OUTLINE:
+
+H1: [Title]
+
+Introduction [100-150 words]
+- Hook
+- Problem statement
+- What reader will learn
+
+H2: [Section 1]
+H3: [Subsection]
+H3: [Subsection]
+
+H2: [Section 2]
+H3: [Subsection]
+H3: [Subsection]
+
+H2: [Section 3]
+...
+
+H2: FAQ
+- Question 1
+- Question 2
+- Question 3
+
+Conclusion
+- Key takeaways
+- CTA
+
+💡 SEO Tips: [specific optimization advice]`,
   },
-  
-  // ==================== 社媒文案 ====================
   {
-    id: 'instagram-caption',
-    category: 'social',
-    icon: '📸',
-    names: {
-      zh: 'Instagram文案',
-      en: 'Instagram Caption',
-      fr: 'Légende Instagram',
-      ru: 'Подпись для Instagram',
-      ja: 'Instagramキャプション',
-      ko: 'Instagram 캡션',
-      de: 'Instagram-Bildunterschrift',
-      es: 'Subtítulo de Instagram'
-    },
-    descriptions: {
-      zh: '生成吸引人的Instagram配文',
-      en: 'Create engaging Instagram captions',
-      fr: 'Créez des légendes Instagram engageantes',
-      ru: 'Создайте вовлекающие подписи для Instagram',
-      ja: '魅力的なInstagramキャプションを作成',
-      ko: '매력적인 Instagram 캡션 생성',
-      de: 'Erstellen Sie ansprechende Instagram-Bildunterschriften',
-      es: 'Crea subtítulos atractivos para Instagram'
-    },
+    id: 'press-release',
+    category: 'content',
+    name: 'Press Release',
+    description: 'Write professional press releases',
+    icon: '📰',
     variables: [
-      { 
-        name: 'content', 
-        type: 'textarea', 
-        required: true,
-        labels: {
-          zh: '内容描述',
-          en: 'Content Description',
-          fr: 'Description du Contenu',
-          ru: 'Описание контента',
-          ja: 'コンテンツの説明',
-          ko: '콘텐츠 설명',
-          de: 'Inhaltsbeschreibung',
-          es: 'Descripción del Contenido'
-        },
-        placeholders: {
-          zh: '描述你的图片或视频内容...',
-          en: 'Describe your image or video content...',
-          fr: 'Décrivez votre image ou vidéo...',
-          ru: 'Опишите ваш контент...',
-          ja: '画像や動画の内容を説明...',
-          ko: '이미지나 동영상 내용을 설명...',
-          de: 'Beschreiben Sie Ihren Inhalt...',
-          es: 'Describe tu imagen o video...'
-        }
-      },
-      { 
-        name: 'vibe', 
-        type: 'select', 
-        required: true,
-        labels: {
-          zh: '氛围',
-          en: 'Vibe',
-          fr: 'Ambiance',
-          ru: 'Вайб',
-          ja: '雰囲気',
-          ko: '분위기',
-          de: 'Stimmung',
-          es: 'Vibra'
-        },
-        options: [
-          { value: 'aesthetic', labels: { zh: '唯美', en: 'Aesthetic', fr: 'Esthétique', ru: 'Эстетичный', ja: 'エステティック', ko: '심미적', de: 'Ästhetisch', es: 'Estético' } },
-          { value: 'funny', labels: { zh: '搞笑', en: 'Funny', fr: 'Drôle', ru: 'Смешной', ja: '面白い', ko: '재미있는', de: 'Lustig', es: 'Divertido' } },
-          { value: 'inspirational', labels: { zh: '励志', en: 'Inspirational', fr: 'Inspirant', ru: 'Вдохновляющий', ja: 'インスピレーショナル', ko: '영감을 주는', de: 'Inspirierend', es: 'Inspirador' } },
-          { value: 'minimalist', labels: { zh: '极简', en: 'Minimalist', fr: 'Minimaliste', ru: 'Минималистичный', ja: 'ミニマル', ko: '미니멀', de: 'Minimalistisch', es: 'Minimalista' } },
-        ]
-      },
+      { name: 'company', label: 'Company Name', type: 'text', required: true, placeholder: 'Your company' },
+      { name: 'announcement', label: 'Announcement Type', type: 'select', required: true, options: [
+        { value: 'product-launch', label: 'Product Launch' },
+        { value: 'partnership', label: 'Partnership' },
+        { value: 'funding', label: 'Funding Round' },
+        { value: 'award', label: 'Award/Recognition' },
+        { value: 'event', label: 'Event/Conference' },
+      ]},
+      { name: 'details', label: 'Key Details', type: 'textarea', required: true, placeholder: 'What are you announcing?' },
+      { name: 'contact', label: 'Media Contact', type: 'text', required: false, placeholder: 'Contact email/phone' },
     ],
-    promptTemplate: `You are an Instagram content expert.
+    promptTemplate: `You are a PR professional who writes press releases that get picked up.
 
-【Content】{content}
-【Vibe】{vibe}
+【Company】{company}
+【Announcement Type】{announcement}
+【Key Details】{details}
+【Media Contact】{contact}
 
 【Requirements】
-1. Write engaging, scroll-stopping captions
-2. Use line breaks for readability
-3. Include relevant hashtags (15-20)
-4. Add a CTA that drives engagement
-5. Keep it authentic and relatable
+1. Newsworthy headline
+2. Strong lead paragraph (who, what, when, where, why)
+3. Quotes from leadership
+4. About section for company
+5. Media contact info
 
 【Output Format】
-Generate 3 caption options:
-1️⃣ [Short & punchy]
-2️⃣ [Story-driven]
-3️⃣ [Question/CTA focused]
 
-Plus relevant hashtags.`
+FOR IMMEDIATE RELEASE
+
+📌 HEADLINE
+[Compelling headline]
+
+📍 [City, State] – [Date]
+
+[Lead paragraph - most important info]
+
+[Body paragraph 1 - details]
+
+[Quote from executive]
+
+[Body paragraph 2 - additional context]
+
+[Quote from stakeholder if applicable]
+
+### 
+
+ABOUT {company}
+[2-3 sentence company description]
+
+MEDIA CONTACT:
+[Contact information]
+
+###`,
   },
-  
-  // ==================== 电商文案 ====================
   {
     id: 'ad-copy',
-    category: 'ecommerce',
+    category: 'content',
+    name: 'Ad Copy',
+    description: 'Create high-converting ad copy for any platform',
     icon: '📢',
-    names: {
-      zh: '广告文案',
-      en: 'Ad Copy',
-      fr: 'Copie Publicitaire',
-      ru: 'Рекламный текст',
-      ja: '広告コピー',
-      ko: '광고 카피',
-      de: 'Werbetext',
-      es: 'Texto Publicitario'
-    },
-    descriptions: {
-      zh: '生成高转化率的广告文案',
-      en: 'Create high-converting ad copy',
-      fr: 'Créez des textes publicitaires convertissants',
-      ru: 'Создайте конверсионный рекламный текст',
-      ja: 'コンバージョンの高い広告コピーを作成',
-      ko: '높은 전환율의 광고 카피 생성',
-      de: 'Erstellen Sie konversionsstarke Werbetexte',
-      es: 'Crea textos publicitarios de alta conversión'
-    },
     variables: [
-      { 
-        name: 'product', 
-        type: 'text', 
-        required: true,
-        labels: {
-          zh: '产品/服务',
-          en: 'Product/Service',
-          fr: 'Produit/Service',
-          ru: 'Продукт/Услуга',
-          ja: '製品/サービス',
-          ko: '제품/서비스',
-          de: 'Produkt/Service',
-          es: 'Producto/Servicio'
-        },
-        placeholders: {
-          zh: '例如：在线课程、SaaS软件',
-          en: 'e.g., Online course, SaaS software',
-          fr: 'ex: Cours en ligne, logiciel SaaS',
-          ru: 'напр.: Онлайн-курс, SaaS',
-          ja: '例：オンラインコース、SaaSソフト',
-          ko: '예: 온라인 강좌, SaaS 소프트웨어',
-          de: 'z.B. Online-Kurs, SaaS-Software',
-          es: 'ej: Curso online, software SaaS'
-        }
-      },
-      { 
-        name: 'platform', 
-        type: 'select', 
-        required: true,
-        labels: {
-          zh: '平台',
-          en: 'Platform',
-          fr: 'Plateforme',
-          ru: 'Платформа',
-          ja: 'プラットフォーム',
-          ko: '플랫폼',
-          de: 'Plattform',
-          es: 'Plataforma'
-        },
-        options: [
-          { value: 'facebook', labels: { zh: 'Facebook', en: 'Facebook', fr: 'Facebook', ru: 'Facebook', ja: 'Facebook', ko: 'Facebook', de: 'Facebook', es: 'Facebook' } },
-          { value: 'google', labels: { zh: 'Google Ads', en: 'Google Ads', fr: 'Google Ads', ru: 'Google Ads', ja: 'Google Ads', ko: 'Google Ads', de: 'Google Ads', es: 'Google Ads' } },
-          { value: 'instagram', labels: { zh: 'Instagram', en: 'Instagram', fr: 'Instagram', ru: 'Instagram', ja: 'Instagram', ko: 'Instagram', de: 'Instagram', es: 'Instagram' } },
-          { value: 'tiktok', labels: { zh: 'TikTok', en: 'TikTok', fr: 'TikTok', ru: 'TikTok', ja: 'TikTok', ko: 'TikTok', de: 'TikTok', es: 'TikTok' } },
-        ]
-      },
-      { 
-        name: 'offer', 
-        type: 'text', 
-        required: false,
-        labels: {
-          zh: '优惠/卖点',
-          en: 'Offer/USP',
-          fr: 'Offre/USP',
-          ru: 'Предложение',
-          ja: 'オファー/独自の強み',
-          ko: '오퍼/USP',
-          de: 'Angebot/USP',
-          es: 'Oferta/USP'
-        },
-        placeholders: {
-          zh: '例如：首月免费、限时8折',
-          en: 'e.g., Free trial, 20% off limited time',
-          fr: 'ex: Essai gratuit, -20% temps limité',
-          ru: 'напр.: Бесплатный пробный период',
-          ja: '例：初月無料、期間限定20%OFF',
-          ko: '예: 무료 체험, 한정 20% 할인',
-          de: 'z.B. Kostenlose Testversion, 20% Rabatt',
-          es: 'ej: Prueba gratis, 20% descuento limitado'
-        }
-      },
+      { name: 'platform', label: 'Platform', type: 'select', required: true, options: [
+        { value: 'google', label: 'Google Ads' },
+        { value: 'facebook', label: 'Facebook Ads' },
+        { value: 'instagram', label: 'Instagram Ads' },
+        { value: 'linkedin', label: 'LinkedIn Ads' },
+        { value: 'twitter', label: 'X/Twitter Ads' },
+      ]},
+      { name: 'product', label: 'Product/Service', type: 'text', required: true, placeholder: 'What are you advertising?' },
+      { name: 'offer', label: 'Offer/USP', type: 'text', required: true, placeholder: 'Unique selling proposition' },
+      { name: 'audience', label: 'Target Audience', type: 'text', required: false, placeholder: 'Who is your target?' },
     ],
-    promptTemplate: `You are a direct response copywriting expert.
+    promptTemplate: `You are a performance marketing copywriter.
 
-【Product/Service】{product}
 【Platform】{platform}
-【Offer】{offer}
+【Product/Service】{product}
+【Offer/USP】{offer}
+【Target Audience】{audience}
 
 【Requirements】
-1. Follow platform-specific character limits
-2. Use power words that drive action
-3. Include social proof elements
-4. Create urgency without being pushy
-5. Strong call-to-action
+Platform-specific character limits and best practices
 
 【Output Format】
-Generate 3 ad variations:
 
-**Variation 1: Problem-Agitate-Solution**
-- Headline
-- Body copy
-- CTA
+📌 HEADLINE OPTIONS (3):
+1. [Option 1]
+2. [Option 2]
+3. [Option 3]
 
-**Variation 2: Benefit-focused**
-- Headline
-- Body copy
-- CTA
+📝 PRIMARY TEXT:
+[Main ad copy]
 
-**Variation 3: Social proof-driven**
-- Headline
-- Body copy
-- CTA`
+💬 DESCRIPTION (if applicable):
+[Supporting text]
+
+🎯 CALL TO ACTION OPTIONS:
+- [CTA 1]
+- [CTA 2]
+- [CTA 3]
+
+💡 Platform Tip: [Specific advice for {platform}]`,
+  },
+
+  // ==================== 保留原有的中文模板 ====================
+  {
+    id: 'moments-caption',
+    category: 'social',
+    name: '朋友圈文案',
+    description: '生成走心朋友圈文案，收获更多点赞',
+    icon: '💬',
+    isPremium: false,
+    variables: [
+      { name: 'scene', label: '场景', type: 'select', required: true, options: [
+        { value: '日常生活', label: '日常生活' },
+        { value: '美食探店', label: '美食探店' },
+        { value: '旅行风景', label: '旅行风景' },
+        { value: '工作感悟', label: '工作感悟' },
+        { value: '健身运动', label: '健身运动' },
+        { value: '节日祝福', label: '节日祝福' },
+        { value: '深夜emo', label: '深夜emo' },
+        { value: '晒娃晒宠', label: '晒娃晒宠' },
+      ]},
+      { name: 'mood', label: '心情/主题', type: 'text', required: true, placeholder: '如：周末放松、美食打卡、生日快乐' },
+      { name: 'style', label: '风格', type: 'select', required: true, options: [
+        { value: '文艺走心', label: '文艺走心' },
+        { value: '幽默搞笑', label: '幽默搞笑' },
+        { value: '高冷简约', label: '高冷简约' },
+        { value: '元气满满', label: '元气满满' },
+        { value: '沙雕可爱', label: '沙雕可爱' },
+      ]},
+      { name: 'keywords', label: '关键词', type: 'text', required: false, placeholder: '如：咖啡、阳光、治愈' },
+    ],
+    promptTemplate: `你是一位朋友圈文案高手，深谙社交媒体传播规律。
+
+【场景】{scene}
+【心情/主题】{mood}
+【风格】{style}（必须严格遵守这个风格）
+【关键词】{keywords}
+
+【风格说明】
+- 文艺走心：诗意语言，注重意境，用词优美
+- 幽默搞笑：出其不意，自嘲式幽默，让人会心一笑
+- 高冷简约：少即是多，言简意赅，留白艺术
+- 元气满满：正能量，阳光向上，充满活力
+- 沙雕可爱：童趣视角，软萌表达，活泼有趣
+
+【⚠️ 去AI味指南】
+1. 用真实口语，像发微信给朋友，别写作文
+2. 可以有"啊""呢""吧"这类语气词
+3. 不用"首先其次""总而言之"这种文章腔
+4. 可以半句、断句，不用句句完整
+5. 加入真实细节，比如时间、天气、具体动作
+6. 表情用自然的，别每句都加
+7. 偶尔可以"跑题"一下，更真实
+8. 别用"让我来告诉你""你知道吗"这种开场
+
+【写作要求】
+1. 字数：50-150字，适合手机阅读
+2. 排版：分行清晰，每行15-20字
+3. 表情：适量使用，1-3个为宜
+4. 语感：真实不做作，像朋友聊天
+5. 风格：必须严格符合【{style}】风格，不要混搭其他风格
+
+【输出格式】
+生成3条都是【{style}】风格的朋友圈文案（内容角度不同，但风格统一）：
+
+1️⃣ [第一条文案 - 这个风格]
+
+2️⃣ [第二条文案 - 同样风格，不同角度]
+
+3️⃣ [第三条文案 - 同样风格，另一角度]
+
+🏷️ 推荐配图建议：[简短建议]`,
+  },
+  {
+    id: 'moments-ad',
+    category: 'social',
+    name: '朋友圈广告文案',
+    description: '高转化朋友圈广告，种草带货必备',
+    icon: '📢',
+    variables: [
+      { name: 'product', label: '产品/服务', type: 'text', required: true, placeholder: '如：眼袋去除、减肥产品、课程' },
+      { name: 'highlight', label: '核心卖点', type: 'text', required: true, placeholder: '如：不开刀、0恢复期、见效快' },
+      { name: 'effect', label: '效果数据', type: 'text', required: true, placeholder: '如：20分钟、3天消肿、减重10斤' },
+      { name: 'audience', label: '目标人群', type: 'text', required: false, placeholder: '如：熬夜党、宝妈、上班族' },
+      { name: 'style', label: '文案风格', type: 'select', required: true, options: [
+        { value: '直击痛点', label: '直击痛点' },
+        { value: '效果导向', label: '效果导向' },
+        { value: '场景代入', label: '场景代入' },
+        { value: '疑问引发', label: '疑问引发' },
+        { value: '对比震撼', label: '对比震撼' },
+      ]},
+    ],
+    promptTemplate: `你是朋友圈广告文案高手，擅长写高转化的种草文案。
+
+【产品/服务】{product}
+【核心卖点】{highlight}
+【效果数据】{effect}
+【目标人群】{audience}
+【文案风格】{style}
+
+【高转化示例参考】
+示例1:
+【✨眼袋消失术｜不开刀的魔法】
+熬夜星人速来！0创口告别"金鱼眼"
+20分钟唤醒眼部年轻力
+午休式变美 下午直接见客户
+
+示例2:
+【👀眼袋退退退！无痕狙击攻略】
+不用动刀的眼周回春术
+专利仪器+靶向溶脂
+像给眼睛做SPA一样温柔
+3天消肿 7天自带高光滤镜💡
+
+示例3:
+【🌙睡一觉眼袋就没了？】
+当代打工人续命美学
+无恢复期黑科技
+午休时间搞定眼部衰老
+第二天照常搬砖/约会/拍vlog
+
+示例4:
+【💉拒绝刀光剑影的眼周革命】
+95后都在卷的轻医美
+不开刀/不缝合/无疤痕
+用科技把眼袋"溶解"掉
+从此自拍不用疯狂P图🤳
+
+示例5:
+【👩⚕眼袋消失的N种方式】
+聪明女孩的选择：
+❌拒绝动刀风险 ✅选择科技抗衰
+❌拒绝漫长恢复 ✅选择即刻上妆
+❌拒绝假面僵硬 ✅选择妈生感美眼
+
+【🔥 高转化朋友圈广告法则】
+1. 标题公式：【emoji + 钩子词 | 利益点】
+2. 第一行直击痛点或人群标签
+3. 用斜杠分隔卖点：不开刀/无恢复/见效快
+4. 数字说话：时间、效果、人数
+5. 场景化：午休搞定/第二天照常上班
+6. 降低门槛：不需要XX、只要XX
+7. 对比手法：❌拒绝...✅选择...
+8. 用"悄悄话"括号增加信任感
+9. 每行别太长，方便手机阅读
+10. emoji点睛，别刷屏
+
+【风格说明】
+- 直击痛点：开头戳痛点，标题带钩子
+- 效果导向：用数据证明，具体时间效果
+- 场景代入：午休/约会/上班，有画面感
+- 疑问引发：用问句开头，引发好奇点击
+- 对比震撼：❌✅对比，前后反差
+
+【输出格式】
+生成3条【{style}】风格的朋友圈广告文案：
+
+1️⃣
+【emoji + 钩子标题】
+[第1行：人群/痛点]
+[第2行：核心卖点]
+[第3行：效果/场景]
+[可选第4行]
+
+2️⃣
+【emoji + 钩子标题】
+[第1行]
+[第2行]
+[第3行]
+
+3️⃣
+【emoji + 钩子标题】
+[第1行]
+[第2行]
+[第3行]
+
+💡 配图建议：[建议配什么类型的图]
+🎯 最佳发布时间：[建议什么时间发]`,
+  },
+  {
+    id: 'xiaohongshu',
+    category: 'social',
+    name: '小红书笔记',
+    description: '生成爆款小红书笔记，提升种草转化',
+    icon: '📕',
+    variables: [
+      { name: 'type', label: '笔记类型', type: 'select', required: true, options: [
+        { value: '种草', label: '种草推荐' },
+        { value: '测评', label: '产品测评' },
+        { value: '教程', label: '教程攻略' },
+        { value: '探店', label: '探店分享' },
+        { value: '日常', label: '日常分享' },
+        { value: '干货', label: '干货知识' },
+      ]},
+      { name: 'product', label: '产品/主题', type: 'text', required: true, placeholder: '如：口红、咖啡店、学习方法' },
+      { name: 'highlight', label: '核心卖点', type: 'text', required: true, placeholder: '最吸引人的特点' },
+      { name: 'audience', label: '目标人群', type: 'text', required: false, placeholder: '如：学生党、上班族' },
+    ],
+    promptTemplate: `你是一位小红书爆款笔记创作者，深谙种草文案技巧。
+
+【笔记类型】{type}
+【产品/主题】{product}
+【核心卖点】{highlight}
+【目标人群】{audience}
+
+【⚠️ 去AI味指南 - 像真人写笔记】
+1. 开头别用"今天给大家分享""安利一个"这种套路
+2. 直接说感受："绝了""真的好用""踩雷了"
+3. 用真实的语气词："啊啊啊""救命""笑死"
+4. 可以有碎碎念，不用句句都在讲产品
+5. 分享真实使用细节，比如什么时候用的、什么心情
+6. 优缺点都要说，太完美的推荐不可信
+7. 不用"首先其次最后"，顺着感觉写
+8. 可以吐槽自己、自嘲，更真实
+9. 真实的笔记会有生活感的细节
+10. 用数字和具体描述，别用"非常好""很不错"
+
+【写作要求】
+1. 标题：带数字、emoji、感叹号，15字内吸引眼球
+2. 开头：直接切入痛点或利益点，别客套
+3. 正文：分段清晰，每段2-3句，口语化
+4. 表情：每个段落1-2个相关emoji，自然使用
+5. 关键词：自然植入，便于搜索
+6. 结尾：引导互动，问真实问题
+
+【输出格式】
+
+📌 标题：
+[爆款标题]
+
+📝 正文：
+
+[开头 - 直接上感受]
+
+[核心内容 - 真实体验]
+
+[使用感受 - 有细节]
+
+[推荐理由 - 真诚建议]
+
+💬 互动话术：
+[问一个真实的问题]
+
+🏷️ 话题标签：
+#标签1 #标签2 #标签3 #标签4 #标签5`,
+  },
+  {
+    id: 'douyin',
+    category: 'social',
+    name: '抖音文案',
+    description: '创作抖音爆款文案，提升视频完播率',
+    icon: '🎵',
+    variables: [
+      { name: 'type', label: '内容类型', type: 'select', required: true, options: [
+        { value: '剧情', label: '剧情类' },
+        { value: '科普', label: '知识科普' },
+        { value: '好物', label: '好物推荐' },
+        { value: 'vlog', label: '生活Vlog' },
+        { value: '搞笑', label: '搞笑段子' },
+        { value: '情感', label: '情感共鸣' },
+      ]},
+      { name: 'topic', label: '视频主题', type: 'text', required: true, placeholder: '视频主要内容' },
+      { name: 'style', label: '风格', type: 'select', required: true, options: [
+        { value: '幽默', label: '幽默搞笑' },
+        { value: '走心', label: '走心治愈' },
+        { value: '专业', label: '专业干货' },
+        { value: '接地气', label: '接地气' },
+        { value: '高冷', label: '高冷范' },
+      ]},
+      { name: 'duration', label: '视频时长', type: 'select', required: false, options: [
+        { value: '15', label: '15秒以内' },
+        { value: '30', label: '30秒左右' },
+        { value: '60', label: '1分钟左右' },
+        { value: '180', label: '3分钟以上' },
+      ]},
+    ],
+    promptTemplate: `你是一位抖音爆款内容创作者，了解平台算法和用户喜好。
+
+【内容类型】{type}
+【视频主题】{topic}
+【风格】{style}（整个视频必须保持这个风格）
+【视频时长】{duration}秒
+
+【风格说明】
+- 幽默：搞笑语言、反转、夸张表达
+- 走心：真诚情感、温暖治愈、引发共鸣
+- 专业：权威感、数据支撑、干货满满
+- 接地气：口语化、生活化、像邻居聊天
+- 高冷：简洁有力、不废话、高级感
+
+【⚠️ 去AI味指南 - 像真人拍抖音】
+1. 别用"大家好我是XXX"，直接开始讲故事
+2. 口语化表达：用"就是那个啥""我当时就"这种
+3. 可以有"呃""然后"这种真实停顿
+4. 别用书面语："进行""实现""提供"→说人话
+5. 用真实的情绪词："绝了""我服了""真的假的"
+6. 加入具体数字和细节，别模糊带过
+7. 可以吐槽自己，更接地气
+8. 别每句话都完整，口语本来就有断句
+9. BGM和文案情绪要匹配
+10. 结尾别生硬"记得点赞关注"，自然带过
+
+【写作要求】
+1. 黄金前3秒：必须有钩子，留人理由
+2. 节奏感：每隔5-8秒一个信息点或转折
+3. 文案要口语化，像在聊天
+4. 结尾要引导互动（点赞关注评论）
+5. 可加悬念或反转提升完播率
+6. 风格必须统一为【{style}】
+
+【输出格式】
+
+🎬 视频脚本（{style}风格）：
+
+⏱️ [0-3秒] 开场钩子
+文案：[直接上，别客套]
+画面建议：[画面描述]
+
+⏱️ [3-{duration}秒] 正文内容
+文案：[主要内容 - 口语化，{style}风格]
+画面建议：[画面描述]
+
+⏱️ [结尾] 引导互动
+文案：[自然带过互动]
+
+📝 视频标题：
+[吸引点击的标题 - 20字内]
+
+🏷️ 话题标签：
+#标签1 #标签2 #标签3
+
+💡 爆款Tips：
+[针对这条视频的优化建议]`,
+  },
+  {
+    id: 'wechat-article',
+    category: 'content',
+    name: '公众号文章',
+    description: '撰写高阅读量的公众号文章',
+    icon: '📰',
+    variables: [
+      { name: 'type', label: '文章类型', type: 'select', required: true, options: [
+        { value: '干货', label: '干货教程' },
+        { value: '观点', label: '观点评论' },
+        { value: '故事', label: '故事叙述' },
+        { value: '新闻', label: '新闻资讯' },
+        { value: '推广', label: '产品推广' },
+      ]},
+      { name: 'topic', label: '文章主题', type: 'text', required: true, placeholder: '文章核心主题' },
+      { name: 'keywords', label: '关键词', type: 'text', required: false, placeholder: '需要覆盖的关键词' },
+      { name: 'length', label: '文章长度', type: 'select', required: false, options: [
+        { value: '800', label: '800字左右' },
+        { value: '1500', label: '1500字左右' },
+        { value: '3000', label: '3000字以上' },
+      ]},
+    ],
+    promptTemplate: `你是一位公众号运营专家，擅长创作10万+阅读量的文章。
+
+【文章类型】{type}
+【文章主题】{topic}
+【关键词】{keywords}
+【文章长度】{length}字
+
+【写作要求】
+1. 标题：引发好奇或共鸣，不超过20字
+2. 开头：3行内抓住读者注意力
+3. 结构：总分总，小标题清晰
+4. 排版：每段不超过4行，留白充足
+5. 金句：文中穿插可传播的金句
+6. 结尾：引导关注、点赞、在看
+
+【输出格式】
+
+📌 文章标题：
+[爆款标题选项 - 3个]
+
+📝 文章大纲：
+
+一、[小标题1]
+[内容要点]
+
+二、[小标题2]
+[内容要点]
+
+三、[小标题3]
+[内容要点]
+
+✍️ 文章正文：
+
+[开头 - 100字左右]
+
+一、[小标题1]
+[段落内容]
+
+二、[小标题2]
+[段落内容]
+
+三、[小标题3]
+[段落内容]
+
+[结尾 - 引导互动]
+
+💡 传播建议：
+[如何提升文章传播效果]`,
+  },
+  {
+    id: 'product-detail',
+    category: 'ecommerce',
+    name: '商品详情页',
+    description: '打造高转化商品详情页文案',
+    icon: '🛒',
+    variables: [
+      { name: 'product', label: '商品名称', type: 'text', required: true, placeholder: '商品名称' },
+      { name: 'category', label: '商品类目', type: 'text', required: true, placeholder: '如：女装、数码、家居' },
+      { name: 'features', label: '核心卖点', type: 'textarea', required: true, placeholder: '商品的主要特点和优势' },
+      { name: 'price', label: '价格定位', type: 'select', required: true, options: [
+        { value: '平价', label: '平价亲民' },
+        { value: '中端', label: '中端品质' },
+        { value: '高端', label: '高端精品' },
+      ]},
+    ],
+    promptTemplate: `你是一位电商详情页文案专家，擅长提升转化率。
+
+【商品名称】{product}
+【商品类目】{category}
+【核心卖点】{features}
+【价格定位】{price}
+
+【写作要求】
+1. 主标题：突出核心卖点，吸引点击
+2. 副标题：补充说明，增加信任
+3. 卖点：3-5个核心卖点，用数据说话
+4. 场景：描绘使用场景，增强代入感
+5. 信任背书：评价、认证、数据
+6. 促销：制造紧迫感，促进下单
+
+【输出格式】
+
+📌 商品主标题：
+[吸引眼球的主标题]
+
+📌 商品副标题：
+[补充说明的副标题]
+
+✨ 核心卖点：
+
+【卖点1】[标题]
+[描述 - 用数据或对比说话]
+
+【卖点2】[标题]
+[描述]
+
+【卖点3】[标题]
+[描述]
+
+🎬 使用场景：
+[场景描述 - 让用户想象使用画面]
+
+⭐ 推荐理由：
+[3-5个推荐理由]
+
+💬 用户评价：
+[模拟3条真实用户评价]
+
+🎁 促销信息：
+[限时优惠描述]
+
+💡 转化Tips：
+[提升转化率的建议]`,
   },
 ];
 
-export default templates;
+// 获取翻译后的模板名称
+export function getTemplateName(template: Template, lang: Language): string {
+  // 国外社媒模板 - 始终使用英文名称
+  const westernPlatforms = ['x-post', 'facebook-post', 'instagram-caption', 'reddit-post', 'linkedin-post', 'tiktok-script', 'youtube-title', 'threads-post', 'pinterest-pin'];
+  if (westernPlatforms.includes(template.id)) {
+    return template.name;
+  }
+  
+  // 中文名称映射
+  const nameMap: Record<string, Record<Language, string>> = {
+    'product-description': {
+      zh: '商品描述', en: 'Product Description', fr: 'Description de produit', ru: 'Описание товара',
+      ja: '商品説明', ko: '제품 설명', de: 'Produktbeschreibung', es: 'Descripción de producto'
+    },
+    'amazon-listing': {
+      zh: '亚马逊商品', en: 'Amazon Listing', fr: 'Fiche Amazon', ru: 'Листинг Amazon',
+      ja: 'Amazon リスティング', ko: 'Amazon 리스팅', de: 'Amazon Angebot', es: 'Ficha Amazon'
+    },
+    'email-marketing': {
+      zh: '营销邮件', en: 'Marketing Email', fr: 'Email marketing', ru: 'Маркетинговое письмо',
+      ja: 'マーケティングメール', ko: '마케팅 이메일', de: 'Marketing-E-Mail', es: 'Email de marketing'
+    },
+    'blog-outline': {
+      zh: '博客大纲', en: 'Blog Post Outline', fr: "Plan d'article de blog", ru: 'План статьи блога',
+      ja: 'ブログ記事のアウトライン', ko: '블로그 게시물 개요', de: 'Blog-Artikel-Gliederung', es: 'Esquema de artículo'
+    },
+    'press-release': {
+      zh: '新闻稿', en: 'Press Release', fr: 'Communiqué de presse', ru: 'Пресс-релиз',
+      ja: 'プレスリリース', ko: '보도 자료', de: 'Pressemitteilung', es: 'Nota de prensa'
+    },
+    'ad-copy': {
+      zh: '广告文案', en: 'Ad Copy', fr: 'Texte publicitaire', ru: 'Рекламный текст',
+      ja: '広告コピー', ko: '광고 문구', de: 'Werbetext', es: 'Texto publicitario'
+    },
+    'moments-caption': {
+      zh: '朋友圈文案', en: 'WeChat Moments', fr: 'Moments WeChat', ru: 'Пост в WeChat',
+      ja: 'WeChat Moments', ko: 'WeChat 모멘츠', de: 'WeChat Moments', es: 'Moments de WeChat'
+    },
+    'moments-ad': {
+      zh: '朋友圈广告文案', en: 'WeChat Ad Copy', fr: 'Publicité WeChat', ru: 'Реклама WeChat',
+      ja: 'WeChat広告', ko: '위챗 광고', de: 'WeChat Werbung', es: 'Anuncio WeChat'
+    },
+    'xiaohongshu': {
+      zh: '小红书笔记', en: 'Xiaohongshu Post', fr: 'Post Xiaohongshu', ru: 'Пост в Xiaohongshu',
+      ja: '小紅書投稿', ko: '샤오홍슈 게시물', de: 'Xiaohongshu Beitrag', es: 'Post en Xiaohongshu'
+    },
+    'douyin': {
+      zh: '抖音文案', en: 'Douyin Content', fr: 'Contenu Douyin', ru: 'Контент Douyin',
+      ja: '抖音コンテンツ', ko: '도우인 콘텐츠', de: 'Douyin Inhalt', es: 'Contenido Douyin'
+    },
+    'wechat-article': {
+      zh: '公众号文章', en: 'WeChat Article', fr: 'Article WeChat', ru: 'Статья WeChat',
+      ja: 'WeChat記事', ko: '위챗 아티클', de: 'WeChat Artikel', es: 'Artículo WeChat'
+    },
+    'product-detail': {
+      zh: '商品详情页', en: 'Product Detail Page', fr: 'Page produit', ru: 'Страница товара',
+      ja: '商品詳細ページ', ko: '제품 상세 페이지', de: 'Produktseite', es: 'Página de producto'
+    },
+  };
+  
+  return nameMap[template.id]?.[lang] || template.name;
+}
+// 获取翻译后的模板描述
+export function getTemplateDescription(template: Template, lang: Language): string {
+  const descMap: Record<string, Record<Language, string>> = {
+    'x-post': {
+      zh: '生成病毒式传播的推文', en: 'Generate viral tweets that engage and convert',
+      fr: 'Générez des tweets viraux', ru: 'Создайте вирусные твиты'
+    },
+    'facebook-post': {
+      zh: '创建吸引人的Facebook帖子', en: 'Create engaging Facebook posts for your audience',
+      fr: 'Créez des posts Facebook engageants', ru: 'Создайте вовлекающие посты Facebook'
+    },
+    'instagram-caption': {
+      zh: '撰写吸引人的Instagram配文', en: 'Write scroll-stopping Instagram captions',
+      fr: 'Rédigez des légendes Instagram captivantes', ru: 'Напишите цепляющие подписи для Instagram'
+    },
+    'product-description': {
+      zh: '撰写高转化的商品描述', en: 'Write compelling product descriptions that convert',
+      fr: 'Rédigez des descriptions de produits convaincantes', ru: 'Напишите убедительные описания товаров'
+    },
+    'blog-outline': {
+      zh: '创建SEO优化的博客文章大纲', en: 'Create SEO-optimized blog post outlines',
+      fr: 'Créez des plans d\'articles de blog optimisés SEO', ru: 'Создайте SEO-оптимизированный план статьи'
+    },
+  };
+  return descMap[template.id]?.[lang] || template.description;
+}
+
+// 获取翻译后的字段标签
+export function getVariableLabel(variable: TemplateVariable, lang: Language): string {
+  if (lang === 'en' || !variable.label) return variable.label;
+  
+  // 常用字段标签翻译
+  const labelMap: Record<string, Record<Language, string>> = {
+    'Topic': { zh: '主题', ja: 'トピック', ko: '주제', de: 'Thema', es: 'Tema', fr: 'Sujet', ru: 'Тема' },
+    'Tone': { zh: '语气', ja: 'トーン', ko: '어조', de: 'Ton', es: 'Tono', fr: 'Ton', ru: 'Тон' },
+    'Goal': { zh: '目标', ja: '目的', ko: '목표', de: 'Ziel', es: 'Objetivo', fr: 'Objectif', ru: 'Цель' },
+    'Product Name': { zh: '商品名称', ja: '商品名', ko: '제품명', de: 'Produktname', es: 'Nombre del producto', fr: 'Nom du produit', ru: 'Название товара' },
+    'Category': { zh: '分类', ja: 'カテゴリ', ko: '카테고리', de: 'Kategorie', es: 'Categoría', fr: 'Catégorie', ru: 'Категория' },
+    'Key Features': { zh: '核心特点', ja: '主な特徴', ko: '핵심 특징', de: 'Hauptmerkmale', es: 'Características principales', fr: 'Caractéristiques principales', ru: 'Ключевые особенности' },
+    'Target Audience': { zh: '目标人群', ja: 'ターゲット層', ko: '타겟 오디언스', de: 'Zielgruppe', es: 'Público objetivo', fr: 'Public cible', ru: 'Целевая аудитория' },
+    '场景': { en: 'Scene', ja: 'シーン', ko: '장면' },
+    '心情/主题': { en: 'Mood/Theme', ja: '気分/テーマ', ko: '분위기/주제' },
+    '风格': { en: 'Style', ja: 'スタイル', ko: '스타일' },
+    '核心卖点': { en: 'Key Selling Points', ja: '主要セールスポイント', ko: '핵심 판매 포인트' },
+    '产品/服务': { en: 'Product/Service', ja: '製品/サービス', ko: '제품/서비스' },
+  };
+  
+  return labelMap[variable.label]?.[lang] || variable.label;
+}
+
+// 获取翻译后的占位符
+export function getVariablePlaceholder(variable: TemplateVariable, lang: Language): string | undefined {
+  if (!variable.placeholder) return undefined;
+  return variable.placeholder; // 保持原占位符
+}
+
+// 获取翻译后的选项标签
+export function getOptionLabel(option: { value: string; label: string }, lang: Language): string {
+  if (lang === 'en') return option.label;
+  
+  // 常用选项翻译
+  const optionMap: Record<string, Record<Language, string>> = {
+    'Professional': { zh: '专业', ja: 'プロフェッショナル', ko: '전문적', de: 'Professionell', es: 'Profesional', fr: 'Professionnel', ru: 'Профессиональный' },
+    'Casual': { zh: '随意', ja: 'カジュアル', ko: '캐주얼', de: 'Locker', es: 'Casual', fr: 'Décontracté', ru: 'Небрежный' },
+    'Humorous': { zh: '幽默', ja: 'ユーモラス', ko: '유머러스', de: 'Humorvoll', es: 'Humorístico', fr: 'Humoristique', ru: 'Юмористический' },
+    'Inspirational': { zh: '励志', ja: 'インスピレーショナル', ko: '영감을 주는', de: 'Inspirierend', es: 'Inspirador', fr: 'Inspirant', ru: 'Вдохновляющий' },
+  };
+  
+  return optionMap[option.label]?.[lang] || option.label;
+}
+
+// 语言指令映射 - 确保生成内容使用正确的语言
+export const languageInstructions: Record<Language, string> = {
+  zh: '【重要】请用中文输出所有内容。',
+  en: '【Important】Please output all content in English.',
+  fr: '【Important】Veuillez produire tout le contenu en français.',
+  ru: '【Важно】Пожалуйста, выводите весь контент на русском языке.',
+  ja: '【重要】すべてのコンテンツを日本語で出力してください。',
+  ko: '【중요】모든 콘텐츠를 한국어로 출력해 주세요.',
+  de: '【Wichtig】Bitte geben Sie alle Inhalte auf Deutsch aus.',
+  es: '【Importante】Por favor, produce todo el contenido en español.'
+};

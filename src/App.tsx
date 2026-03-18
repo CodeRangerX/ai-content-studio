@@ -4,7 +4,18 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginPage } from './components/LoginPage';
 import { UserMenu } from './components/UserMenu';
-import { templates, categories, type Template, getTemplateName } from './lib/templates';
+import { 
+  templates, 
+  categories, 
+  categoryNames,
+  languageInstructions,
+  type Template,
+  getTemplateName,
+  getTemplateDescription,
+  getVariableLabel,
+  getVariablePlaceholder,
+  getOptionLabel
+} from './lib/templates';
 import { Language, languageNames, translations } from './lib/i18n';
 import { authConfig } from './lib/auth';
 
@@ -62,14 +73,6 @@ function Header({ lang, onLangChange }: { lang: Language; onLangChange: (lang: L
 // CategoryTabs
 // ============================================
 function CategoryTabs({ active, onChange, lang }: { active: string; onChange: (id: string) => void; lang: Language }) {
-  const t = translations[lang];
-  const categoryLabels: Record<string, string> = {
-    all: t.all,
-    ecommerce: t.ecommerce,
-    social: t.social,
-    content: t.content
-  };
-  
   return (
     <div className="categories">
       <div className="categories-inner">
@@ -79,7 +82,7 @@ function CategoryTabs({ active, onChange, lang }: { active: string; onChange: (i
             onClick={() => onChange(cat.id)}
             className={`category-btn ${active === cat.id ? 'active' : ''}`}
           >
-            {categoryLabels[cat.id] || cat.name}
+            {categoryNames[cat.id]?.[lang] || cat.name}
           </button>
         ))}
       </div>
@@ -115,7 +118,7 @@ function TemplateCard({
             <span className="template-name">{getTemplateName(template, lang)}</span>
             {template.isPremium && <span className="pro-badge">PRO</span>}
           </div>
-          <p className="template-desc">{template.description}</p>
+          <p className="template-desc">{getTemplateDescription(template, lang)}</p>
         </div>
         <span className="template-arrow">→</span>
       </div>
@@ -142,7 +145,7 @@ function FormField({
   return (
     <div className="form-field">
       <label className="form-label">
-        {field.label}
+        {getVariableLabel(field, lang)}
         {field.required && <span className="form-required">*</span>}
       </label>
       
@@ -154,14 +157,14 @@ function FormField({
         >
           <option value="">{t.selectPlaceholder}</option>
           {field.options?.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
+            <option key={opt.value} value={opt.value}>{getOptionLabel(opt, lang)}</option>
           ))}
         </select>
       ) : field.type === 'textarea' ? (
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={field.placeholder}
+          placeholder={getVariablePlaceholder(field, lang) || ''}
           rows={3}
           className="form-textarea"
         />
@@ -170,7 +173,7 @@ function FormField({
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={field.placeholder}
+          placeholder={getVariablePlaceholder(field, lang) || ''}
           className="form-input"
         />
       )}
@@ -316,6 +319,8 @@ function AppContent() {
     Object.entries(formData).forEach(([key, value]) => {
       prompt = prompt.replace(new RegExp(`\\{${key}\\}`, 'g'), value || '');
     });
+    // 添加语言指令
+    prompt = `${languageInstructions[lang]}\n\n${prompt}`;
     return prompt;
   };
 

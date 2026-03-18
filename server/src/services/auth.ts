@@ -124,7 +124,7 @@ export async function sendVerificationCode(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'noreply@yourdomain.com',
+        from: 'noreply@send.content-studio-ai.shop',
         to: email,
         subject: '【内容工坊】验证码',
         html: `

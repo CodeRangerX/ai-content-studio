@@ -826,6 +826,8 @@ body {
   border: 1px solid rgba(196, 160, 82, 0.12);
   border-radius: 16px;
   padding: 32px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .login-header {
@@ -901,12 +903,14 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  width: 100%;
 }
 
 .login-field {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
 }
 
 .login-label {
@@ -921,6 +925,8 @@ body {
   border-radius: 8px;
   color: #f5f3ef;
   font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
   transition: border-color 0.2s;
 }
 
@@ -935,25 +941,28 @@ body {
 
 .login-code-row {
   display: flex;
-  gap: 12px;
+  gap: 8px;
+  width: 100%;
 }
 
 .login-code-input {
   flex: 1;
+  min-width: 0;
   letter-spacing: 4px;
   text-align: center;
 }
 
 .login-code-btn {
-  padding: 12px 16px;
+  padding: 12px 12px;
   background: rgba(196, 160, 82, 0.15);
   border: 1px solid rgba(196, 160, 82, 0.2);
   border-radius: 8px;
   color: #c4a052;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.2s;
 }
 

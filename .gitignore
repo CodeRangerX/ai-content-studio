@@ -29,7 +29,3 @@ dist-ssr
 *.db-shm
 *.db-wal
 server/data/*.db*
-
-# 保留构建产物用于 Railway 部署
-!server/dist/
-!server/dist/**/*

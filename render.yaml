@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: ai-content-studio-api
+    env: node
+    region: singapore
+    plan: free
+    buildCommand: cd server && npm install && npm run build
+    startCommand: cd server && node dist/index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        value: 331742752167-cu9qgt0l2bjja7n5prdbvl61n3ju5i3p.apps.googleusercontent.com

@@ -1,4 +1,4 @@
-# Railway 部署 Dockerfile - 简化版
+# Railway 部署 Dockerfile
 FROM node:22-slim
 
 WORKDIR /app
@@ -6,8 +6,8 @@ WORKDIR /app
 # 复制 package.json
 COPY server/package*.json ./
 
-# 安装依赖
-RUN npm install
+# 安装依赖 - 明确使用 npm
+RUN npm install --legacy-peer-deps
 
 # 复制源代码
 COPY server/src ./src

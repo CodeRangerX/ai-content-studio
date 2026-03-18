@@ -1,4 +1,22 @@
 import { Language } from './i18n';
+import { 
+  getTemplateName as _getTemplateName,
+  getTemplateDescription as _getTemplateDescription,
+  getVariableLabel as _getVariableLabel,
+  getVariablePlaceholder as _getVariablePlaceholder,
+  getOptionLabel as _getOptionLabel,
+  languageInstructions
+} from './translations';
+
+// 重新导出翻译函数
+export { 
+  _getTemplateName as getTemplateName,
+  _getTemplateDescription as getTemplateDescription,
+  _getVariableLabel as getVariableLabel,
+  _getVariablePlaceholder as getVariablePlaceholder,
+  _getOptionLabel as getOptionLabel,
+  languageInstructions
+};
 
 // 模板变量类型
 export interface TemplateVariable {
@@ -1328,147 +1346,3 @@ Platform-specific character limits and best practices
   },
 ];
 
-// 获取翻译后的模板名称
-export function getTemplateName(template: Template, lang: Language): string {
-  // 国外社媒模板 - 始终使用英文名称
-  const westernPlatforms = ['x-post', 'facebook-post', 'instagram-caption', 'reddit-post', 'linkedin-post', 'tiktok-script', 'youtube-title', 'threads-post', 'pinterest-pin'];
-  if (westernPlatforms.includes(template.id)) {
-    return template.name;
-  }
-  
-  // 中文名称映射
-  const nameMap: Record<string, Record<Language, string>> = {
-    'product-description': {
-      zh: '商品描述', en: 'Product Description', fr: 'Description de produit', ru: 'Описание товара',
-      ja: '商品説明', ko: '제품 설명', de: 'Produktbeschreibung', es: 'Descripción de producto'
-    },
-    'amazon-listing': {
-      zh: '亚马逊商品', en: 'Amazon Listing', fr: 'Fiche Amazon', ru: 'Листинг Amazon',
-      ja: 'Amazon リスティング', ko: 'Amazon 리스팅', de: 'Amazon Angebot', es: 'Ficha Amazon'
-    },
-    'email-marketing': {
-      zh: '营销邮件', en: 'Marketing Email', fr: 'Email marketing', ru: 'Маркетинговое письмо',
-      ja: 'マーケティングメール', ko: '마케팅 이메일', de: 'Marketing-E-Mail', es: 'Email de marketing'
-    },
-    'blog-outline': {
-      zh: '博客大纲', en: 'Blog Post Outline', fr: "Plan d'article de blog", ru: 'План статьи блога',
-      ja: 'ブログ記事のアウトライン', ko: '블로그 게시물 개요', de: 'Blog-Artikel-Gliederung', es: 'Esquema de artículo'
-    },
-    'press-release': {
-      zh: '新闻稿', en: 'Press Release', fr: 'Communiqué de presse', ru: 'Пресс-релиз',
-      ja: 'プレスリリース', ko: '보도 자료', de: 'Pressemitteilung', es: 'Nota de prensa'
-    },
-    'ad-copy': {
-      zh: '广告文案', en: 'Ad Copy', fr: 'Texte publicitaire', ru: 'Рекламный текст',
-      ja: '広告コピー', ko: '광고 문구', de: 'Werbetext', es: 'Texto publicitario'
-    },
-    'moments-caption': {
-      zh: '朋友圈文案', en: 'WeChat Moments', fr: 'Moments WeChat', ru: 'Пост в WeChat',
-      ja: 'WeChat Moments', ko: 'WeChat 모멘츠', de: 'WeChat Moments', es: 'Moments de WeChat'
-    },
-    'moments-ad': {
-      zh: '朋友圈广告文案', en: 'WeChat Ad Copy', fr: 'Publicité WeChat', ru: 'Реклама WeChat',
-      ja: 'WeChat広告', ko: '위챗 광고', de: 'WeChat Werbung', es: 'Anuncio WeChat'
-    },
-    'xiaohongshu': {
-      zh: '小红书笔记', en: 'Xiaohongshu Post', fr: 'Post Xiaohongshu', ru: 'Пост в Xiaohongshu',
-      ja: '小紅書投稿', ko: '샤오홍슈 게시물', de: 'Xiaohongshu Beitrag', es: 'Post en Xiaohongshu'
-    },
-    'douyin': {
-      zh: '抖音文案', en: 'Douyin Content', fr: 'Contenu Douyin', ru: 'Контент Douyin',
-      ja: '抖音コンテンツ', ko: '도우인 콘텐츠', de: 'Douyin Inhalt', es: 'Contenido Douyin'
-    },
-    'wechat-article': {
-      zh: '公众号文章', en: 'WeChat Article', fr: 'Article WeChat', ru: 'Статья WeChat',
-      ja: 'WeChat記事', ko: '위챗 아티클', de: 'WeChat Artikel', es: 'Artículo WeChat'
-    },
-    'product-detail': {
-      zh: '商品详情页', en: 'Product Detail Page', fr: 'Page produit', ru: 'Страница товара',
-      ja: '商品詳細ページ', ko: '제품 상세 페이지', de: 'Produktseite', es: 'Página de producto'
-    },
-  };
-  
-  return nameMap[template.id]?.[lang] || template.name;
-}
-// 获取翻译后的模板描述
-export function getTemplateDescription(template: Template, lang: Language): string {
-  const descMap: Record<string, Record<Language, string>> = {
-    'x-post': {
-      zh: '生成病毒式传播的推文', en: 'Generate viral tweets that engage and convert',
-      fr: 'Générez des tweets viraux', ru: 'Создайте вирусные твиты'
-    },
-    'facebook-post': {
-      zh: '创建吸引人的Facebook帖子', en: 'Create engaging Facebook posts for your audience',
-      fr: 'Créez des posts Facebook engageants', ru: 'Создайте вовлекающие посты Facebook'
-    },
-    'instagram-caption': {
-      zh: '撰写吸引人的Instagram配文', en: 'Write scroll-stopping Instagram captions',
-      fr: 'Rédigez des légendes Instagram captivantes', ru: 'Напишите цепляющие подписи для Instagram'
-    },
-    'product-description': {
-      zh: '撰写高转化的商品描述', en: 'Write compelling product descriptions that convert',
-      fr: 'Rédigez des descriptions de produits convaincantes', ru: 'Напишите убедительные описания товаров'
-    },
-    'blog-outline': {
-      zh: '创建SEO优化的博客文章大纲', en: 'Create SEO-optimized blog post outlines',
-      fr: 'Créez des plans d\'articles de blog optimisés SEO', ru: 'Создайте SEO-оптимизированный план статьи'
-    },
-  };
-  return descMap[template.id]?.[lang] || template.description;
-}
-
-// 获取翻译后的字段标签
-export function getVariableLabel(variable: TemplateVariable, lang: Language): string {
-  if (lang === 'en' || !variable.label) return variable.label;
-  
-  // 常用字段标签翻译
-  const labelMap: Record<string, Record<Language, string>> = {
-    'Topic': { zh: '主题', ja: 'トピック', ko: '주제', de: 'Thema', es: 'Tema', fr: 'Sujet', ru: 'Тема' },
-    'Tone': { zh: '语气', ja: 'トーン', ko: '어조', de: 'Ton', es: 'Tono', fr: 'Ton', ru: 'Тон' },
-    'Goal': { zh: '目标', ja: '目的', ko: '목표', de: 'Ziel', es: 'Objetivo', fr: 'Objectif', ru: 'Цель' },
-    'Product Name': { zh: '商品名称', ja: '商品名', ko: '제품명', de: 'Produktname', es: 'Nombre del producto', fr: 'Nom du produit', ru: 'Название товара' },
-    'Category': { zh: '分类', ja: 'カテゴリ', ko: '카테고리', de: 'Kategorie', es: 'Categoría', fr: 'Catégorie', ru: 'Категория' },
-    'Key Features': { zh: '核心特点', ja: '主な特徴', ko: '핵심 특징', de: 'Hauptmerkmale', es: 'Características principales', fr: 'Caractéristiques principales', ru: 'Ключевые особенности' },
-    'Target Audience': { zh: '目标人群', ja: 'ターゲット層', ko: '타겟 오디언스', de: 'Zielgruppe', es: 'Público objetivo', fr: 'Public cible', ru: 'Целевая аудитория' },
-    '场景': { en: 'Scene', ja: 'シーン', ko: '장면' },
-    '心情/主题': { en: 'Mood/Theme', ja: '気分/テーマ', ko: '분위기/주제' },
-    '风格': { en: 'Style', ja: 'スタイル', ko: '스타일' },
-    '核心卖点': { en: 'Key Selling Points', ja: '主要セールスポイント', ko: '핵심 판매 포인트' },
-    '产品/服务': { en: 'Product/Service', ja: '製品/サービス', ko: '제품/서비스' },
-  };
-  
-  return labelMap[variable.label]?.[lang] || variable.label;
-}
-
-// 获取翻译后的占位符
-export function getVariablePlaceholder(variable: TemplateVariable, lang: Language): string | undefined {
-  if (!variable.placeholder) return undefined;
-  return variable.placeholder; // 保持原占位符
-}
-
-// 获取翻译后的选项标签
-export function getOptionLabel(option: { value: string; label: string }, lang: Language): string {
-  if (lang === 'en') return option.label;
-  
-  // 常用选项翻译
-  const optionMap: Record<string, Record<Language, string>> = {
-    'Professional': { zh: '专业', ja: 'プロフェッショナル', ko: '전문적', de: 'Professionell', es: 'Profesional', fr: 'Professionnel', ru: 'Профессиональный' },
-    'Casual': { zh: '随意', ja: 'カジュアル', ko: '캐주얼', de: 'Locker', es: 'Casual', fr: 'Décontracté', ru: 'Небрежный' },
-    'Humorous': { zh: '幽默', ja: 'ユーモラス', ko: '유머러스', de: 'Humorvoll', es: 'Humorístico', fr: 'Humoristique', ru: 'Юмористический' },
-    'Inspirational': { zh: '励志', ja: 'インスピレーショナル', ko: '영감을 주는', de: 'Inspirierend', es: 'Inspirador', fr: 'Inspirant', ru: 'Вдохновляющий' },
-  };
-  
-  return optionMap[option.label]?.[lang] || option.label;
-}
-
-// 语言指令映射 - 确保生成内容使用正确的语言
-export const languageInstructions: Record<Language, string> = {
-  zh: '【重要】请用中文输出所有内容。',
-  en: '【Important】Please output all content in English.',
-  fr: '【Important】Veuillez produire tout le contenu en français.',
-  ru: '【Важно】Пожалуйста, выводите весь контент на русском языке.',
-  ja: '【重要】すべてのコンテンツを日本語で出力してください。',
-  ko: '【중요】모든 콘텐츠를 한국어로 출력해 주세요.',
-  de: '【Wichtig】Bitte geben Sie alle Inhalte auf Deutsch aus.',
-  es: '【Importante】Por favor, produce todo el contenido en español.'
-};

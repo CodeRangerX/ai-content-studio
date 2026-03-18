@@ -1,0 +1,16 @@
+[phases.setup]
+
+nixPkgs = ['nodejs_20', 'yarn']
+
+[phases.install]
+cmds = ['cd server && yarn install --frozen-lockfile || yarn install']
+
+[phases.build]
+cmds = ['cd server && yarn build || npm run build']
+
+[start]
+cmd = 'cd server && node dist/index.js'
+
+[variables]
+NODE_ENV = 'production'
+NODE_OPTIONS = '--max-old-space-size=512'

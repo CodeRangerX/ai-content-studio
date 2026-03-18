@@ -24,8 +24,12 @@ dist-ssr
 *.sw?
 .vercel
 
-# SQLite databases
+# SQLite databases (但保留目录)
 *.db
 *.db-shm
 *.db-wal
-server/data/
+server/data/*.db*
+
+# 保留构建产物用于 Railway 部署
+!server/dist/
+!server/dist/**/*

@@ -30,6 +30,8 @@ app.use('*', cors({
     process.env.FRONTEND_URL || 'http://localhost:5173',
     'https://pro.ai-content-studio-am5.pages.dev',
     'https://main.ai-content-studio-am5.pages.dev',
+    'https://content-studio-ai.shop',
+    'https://pro.content-studio-ai.shop',
   ],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],

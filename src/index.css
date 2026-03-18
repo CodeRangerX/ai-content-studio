@@ -9,6 +9,7 @@
 
 html {
   font-size: 16px;
+  height: 100%;
 }
 
 body {
@@ -16,6 +17,15 @@ body {
   background: #0d0d0f;
   color: #f5f3ef;
   line-height: 1.5;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+#root {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Header */
@@ -177,6 +187,7 @@ body {
 /* Main */
 .main {
   position: relative;
+  flex: 1;
   padding-top: 120px;
   padding-bottom: 48px;
   padding-left: 32px;
@@ -1607,14 +1618,11 @@ body {
 
 /* Footer */
 .footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
   padding: 16px;
   background: rgba(13, 13, 15, 0.9);
   border-top: 1px solid rgba(196, 160, 82, 0.06);
   text-align: center;
+  margin-top: auto;
 }
 
 .footer-text {

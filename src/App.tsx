@@ -5,8 +5,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginPage } from './components/LoginPage';
 import { UserMenu } from './components/UserMenu';
 import { 
-  templates, 
-  categories, 
+  templates,
   categoryNames,
   languageInstructions,
   type Template,
@@ -22,7 +21,12 @@ import { authConfig } from './lib/auth';
 // ============================================
 // Header
 // ============================================
-function Header({ lang, onLangChange }: { lang: Language; onLangChange: (lang: Language) => void }) {
+function Header({ lang, onLangChange, onBack, inWorkspace }: { 
+  lang: Language; 
+  onLangChange: (lang: Language) => void;
+  onBack?: () => void;
+  inWorkspace?: boolean;
+}) {
   const { user, isAuthenticated, logout } = useAuth();
   const t = translations[lang];
   
@@ -30,6 +34,11 @@ function Header({ lang, onLangChange }: { lang: Language; onLangChange: (lang: L
     <header className="header">
       <div className="header-inner">
         <div className="logo-wrap">
+          {inWorkspace && onBack && (
+            <button onClick={onBack} className="back-btn">
+              ←
+            </button>
+          )}
           <div className="logo-icon">
             <div className="logo-inner">
               <span className="logo-text">文</span>
@@ -42,7 +51,6 @@ function Header({ lang, onLangChange }: { lang: Language; onLangChange: (lang: L
         </div>
         
         <div className="header-right">
-          {/* Language Selector */}
           <select 
             value={lang} 
             onChange={(e) => onLangChange(e.target.value as Language)}
@@ -70,190 +78,289 @@ function Header({ lang, onLangChange }: { lang: Language; onLangChange: (lang: L
 }
 
 // ============================================
-// CategoryTabs
+// TemplateGrid - 首页模板网格
 // ============================================
-function CategoryTabs({ active, onChange, lang }: { active: string; onChange: (id: string) => void; lang: Language }) {
+function TemplateGrid({ lang, onSelect }: { lang: Language; onSelect: (t: Template) => void }) {
+  const t = translations[lang];
+  
+  // 按分类分组
+  const groupedTemplates = {
+    social: templates.filter(t => t.category === 'social'),
+    ecommerce: templates.filter(t => t.category === 'ecommerce'),
+    content: templates.filter(t => t.category === 'content'),
+  };
+  
+  const categoryIcons: Record<string, string> = {
+    social: '📱',
+    ecommerce: '🛒',
+    content: '📝'
+  };
+
   return (
-    <div className="categories">
-      <div className="categories-inner">
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => onChange(cat.id)}
-            className={`category-btn ${active === cat.id ? 'active' : ''}`}
-          >
-            {categoryNames[cat.id]?.[lang] || cat.name}
-          </button>
-        ))}
-      </div>
+    <div className="template-grid-page">
+      {/* Hero Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="hero-section"
+      >
+        <h1 className="hero-main-title">
+          {t.heroTitle1}
+          <span className="hero-highlight">{t.heroTitle2}</span>
+        </h1>
+        <p className="hero-description">
+          {lang === 'zh' 
+            ? '选择一个模板，开始创作你的专业内容'
+            : 'Select a template to start creating professional content'}
+        </p>
+      </motion.div>
+      
+      {/* Template Sections */}
+      {Object.entries(groupedTemplates).map(([category, items]) => (
+        <motion.div
+          key={category}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="template-section"
+        >
+          <div className="section-header">
+            <span className="section-icon">{categoryIcons[category]}</span>
+            <h2 className="section-title">{categoryNames[category]?.[lang] || category}</h2>
+          </div>
+          
+          <div className="template-cards-grid">
+            {items.map((template) => (
+              <motion.button
+                key={template.id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => onSelect(template)}
+                className="template-card-new"
+              >
+                <div className="card-icon">{template.icon}</div>
+                <div className="card-content">
+                  <h3 className="card-title">{getTemplateName(template, lang)}</h3>
+                  <p className="card-desc">{getTemplateDescription(template, lang)}</p>
+                </div>
+                <div className="card-arrow">→</div>
+                {template.isPremium && <span className="card-badge">PRO</span>}
+              </motion.button>
+            ))}
+          </div>
+        </motion.div>
+      ))}
     </div>
   );
 }
 
 // ============================================
-// TemplateCard
+// Workspace - 工作台
 // ============================================
-function TemplateCard({ 
+function Workspace({ 
   template, 
-  isSelected, 
-  onClick,
-  lang
+  lang, 
+  onBack 
 }: { 
   template: Template; 
-  isSelected: boolean; 
-  onClick: () => void;
   lang: Language;
+  onBack: () => void;
 }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`template-card ${isSelected ? 'selected' : ''}`}
-    >
-      <div className="template-inner">
-        <div className="template-icon">
-          {template.icon}
-        </div>
-        <div className="template-content">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span className="template-name">{getTemplateName(template, lang)}</span>
-            {template.isPremium && <span className="pro-badge">PRO</span>}
-          </div>
-          <p className="template-desc">{getTemplateDescription(template, lang)}</p>
-        </div>
-        <span className="template-arrow">→</span>
-      </div>
-    </button>
-  );
-}
-
-// ============================================
-// FormField
-// ============================================
-function FormField({ 
-  field, 
-  value, 
-  onChange,
-  lang
-}: { 
-  field: Template['variables'][0]; 
-  value: string; 
-  onChange: (value: string) => void;
-  lang: Language;
-}) {
-  const t = translations[lang];
-  
-  return (
-    <div className="form-field">
-      <label className="form-label">
-        {getVariableLabel(field, lang)}
-        {field.required && <span className="form-required">*</span>}
-      </label>
-      
-      {field.type === 'select' ? (
-        <select 
-          value={value} 
-          onChange={(e) => onChange(e.target.value)} 
-          className="form-select"
-        >
-          <option value="">{t.selectPlaceholder}</option>
-          {field.options?.map((opt) => (
-            <option key={opt.value} value={opt.value}>{getOptionLabel(opt, lang)}</option>
-          ))}
-        </select>
-      ) : field.type === 'textarea' ? (
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={getVariablePlaceholder(field, lang) || ''}
-          rows={3}
-          className="form-textarea"
-        />
-      ) : (
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={getVariablePlaceholder(field, lang) || ''}
-          className="form-input"
-        />
-      )}
-    </div>
-  );
-}
-
-// ============================================
-// ResultPanel
-// ============================================
-function ResultPanel({ 
-  result, 
-  loading,
-  onCopy,
-  copied,
-  lang
-}: { 
-  result: string; 
-  loading: boolean;
-  onCopy: () => void;
-  copied: boolean;
-  lang: Language;
-}) {
-  const t = translations[lang];
+  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [result, setResult] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
   const resultRef = useRef<HTMLPreElement>(null);
   
+  const t = translations[lang];
+
   useEffect(() => {
     if (result && resultRef.current) {
       resultRef.current.scrollTop = resultRef.current.scrollHeight;
     }
   }, [result]);
 
-  return (
-    <div className="result-panel">
-      <div className="result-header">
-        <div className="result-label">
-          <div className="result-dot" />
-          <span className="result-title">{t.output}</span>
-        </div>
-        {result && (
-          <button 
-            onClick={onCopy}
-            className={`result-copy ${copied ? 'copied' : ''}`}
-          >
-            {copied ? t.copied : t.copy}
-          </button>
-        )}
-      </div>
+  const handleFormChange = (name: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const generatePrompt = () => {
+    let prompt = template.promptTemplate;
+    Object.entries(formData).forEach(([key, value]) => {
+      prompt = prompt.replace(new RegExp(`\\{${key}\\}`, 'g'), value || '');
+    });
+    prompt = `${languageInstructions[lang]}\n\n${prompt}`;
+    return prompt;
+  };
+
+  const handleGenerate = async () => {
+    const missingFields = template.variables
+      .filter((v) => v.required && !formData[v.name])
+      .map((v) => getVariableLabel(v, lang));
+    
+    if (missingFields.length > 0) {
+      setError(`${lang === 'zh' ? '请填写' : 'Please fill in'}: ${missingFields.join(', ')}`);
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setResult('');
+
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: generatePrompt() }),
+      });
+
+      const data = await response.json();
       
-      <div className="result-body">
-        {loading ? (
-          <div className="result-loading">
-            <div style={{ textAlign: 'center' }}>
-              <div className="loading-spinner" />
-              <div className="loading-inner">
+      if (data.error) {
+        setError(data.error);
+      } else {
+        setResult(data.content || (lang === 'zh' ? '生成失败，请重试' : 'Generation failed, please try again'));
+      }
+    } catch {
+      setError(lang === 'zh' ? '网络错误，请稍后重试' : 'Network error, please try again later');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(result);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="workspace">
+      <div className="workspace-container">
+        {/* Left: Form */}
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="workspace-form"
+        >
+          <div className="form-header">
+            <span className="form-icon">{template.icon}</span>
+            <h2 className="form-title">{getTemplateName(template, lang)}</h2>
+          </div>
+          
+          <div className="form-body">
+            {template.variables.map((field) => (
+              <div key={field.name} className="form-field">
+                <label className="form-label">
+                  {getVariableLabel(field, lang)}
+                  {field.required && <span className="form-required">*</span>}
+                </label>
+                
+                {field.type === 'select' ? (
+                  <select 
+                    value={formData[field.name] || ''} 
+                    onChange={(e) => handleFormChange(field.name, e.target.value)} 
+                    className="form-select"
+                  >
+                    <option value="">{t.selectPlaceholder}</option>
+                    {field.options?.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{getOptionLabel(opt, lang)}</option>
+                    ))}
+                  </select>
+                ) : field.type === 'textarea' ? (
+                  <textarea
+                    value={formData[field.name] || ''}
+                    onChange={(e) => handleFormChange(field.name, e.target.value)}
+                    placeholder={getVariablePlaceholder(field, lang) || ''}
+                    rows={3}
+                    className="form-textarea"
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    value={formData[field.name] || ''}
+                    onChange={(e) => handleFormChange(field.name, e.target.value)}
+                    placeholder={getVariablePlaceholder(field, lang) || ''}
+                    className="form-input"
+                  />
+                )}
+              </div>
+            ))}
+            
+            {error && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="form-error"
+              >
+                {error}
+              </motion.div>
+            )}
+            
+            <button
+              onClick={handleGenerate}
+              disabled={loading}
+              className="generate-btn"
+            >
+              {loading ? (
+                <>
+                  <span className="spinner" />
+                  {t.generating}
+                </>
+              ) : t.generate}
+            </button>
+          </div>
+        </motion.div>
+        
+        {/* Right: Result */}
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="workspace-result"
+        >
+          <div className="result-header">
+            <div className="result-label">
+              <div className="result-dot" />
+              <span className="result-title">{t.output}</span>
+            </div>
+            {result && (
+              <button 
+                onClick={handleCopy}
+                className={`result-copy ${copied ? 'copied' : ''}`}
+              >
+                {copied ? t.copied : t.copy}
+              </button>
+            )}
+          </div>
+          
+          <div className="result-body">
+            {loading ? (
+              <div className="result-loading">
+                <div className="loading-spinner" />
                 <p className="loading-title">{t.creating}</p>
                 <p className="loading-sub">DeepSeek Reasoner</p>
               </div>
-            </div>
+            ) : result ? (
+              <pre ref={resultRef} className="result-content">
+                {result}
+              </pre>
+            ) : (
+              <div className="result-empty">
+                <div className="empty-icon">✍</div>
+                <p className="empty-title">{t.selectTemplate}</p>
+                <p className="empty-sub">SELECT A TEMPLATE</p>
+              </div>
+            )}
           </div>
-        ) : result ? (
-          <pre ref={resultRef} className="result-content">
-            {result}
-          </pre>
-        ) : (
-          <div className="result-empty">
-            <div>
-              <div className="empty-icon">✍</div>
-              <p className="empty-title">{t.selectTemplate}</p>
-              <p className="empty-sub">SELECT A TEMPLATE</p>
-            </div>
-          </div>
-        )}
+        </motion.div>
       </div>
     </div>
   );
 }
 
 // ============================================
-// Particles
+// Particles Background
 // ============================================
 function Particles() {
   return (
@@ -284,234 +391,65 @@ function Particles() {
 }
 
 // ============================================
-// Main App Content (after login)
+// Main App Content
 // ============================================
 function AppContent() {
   const [lang, setLang] = useState<Language>('en');
-  const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
-  const [formData, setFormData] = useState<Record<string, string>>({});
-  const [result, setResult] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [copied, setCopied] = useState(false);
-
-  const t = translations[lang];
-  
-  const filteredTemplates = selectedCategory === 'all'
-    ? templates
-    : templates.filter((t) => t.category === selectedCategory);
-
-  const handleTemplateSelect = (template: Template) => {
-    setSelectedTemplate(template);
-    setFormData({});
-    setResult('');
-    setError('');
-  };
-
-  const handleFormChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const generatePrompt = () => {
-    if (!selectedTemplate) return '';
-    let prompt = selectedTemplate.promptTemplate;
-    Object.entries(formData).forEach(([key, value]) => {
-      prompt = prompt.replace(new RegExp(`\\{${key}\\}`, 'g'), value || '');
-    });
-    // 添加语言指令
-    prompt = `${languageInstructions[lang]}\n\n${prompt}`;
-    return prompt;
-  };
-
-  const handleGenerate = async () => {
-    if (!selectedTemplate) return;
-    
-    const missingFields = selectedTemplate.variables
-      .filter((v) => v.required && !formData[v.name])
-      .map((v) => v.label);
-    
-    if (missingFields.length > 0) {
-      setError(`Please fill in: ${missingFields.join(', ')}`);
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    setResult('');
-
-    try {
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: generatePrompt() }),
-      });
-
-      const data = await response.json();
-      
-      if (data.error) {
-        setError(data.error);
-      } else {
-        setResult(data.content || 'Generation failed, please try again');
-      }
-    } catch {
-      setError('Network error, please try again later');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(result);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <>
       <Particles />
-      <Header lang={lang} onLangChange={setLang} />
+      <Header 
+        lang={lang} 
+        onLangChange={setLang} 
+        onBack={() => setSelectedTemplate(null)}
+        inWorkspace={!!selectedTemplate}
+      />
       
       <main className="main">
         <div className="main-inner">
-          {/* Hero */}
-          <motion.div 
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="hero"
-          >
-            <h1 className="hero-title">
-              {t.heroTitle1}
-              <br />
-              <span className="hero-gold">{t.heroTitle2}</span>
-            </h1>
-            <motion.p
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-              className="hero-sub"
-            >
-              {t.heroSub}
-            </motion.p>
-          </motion.div>
-          
-          {/* Categories */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <CategoryTabs active={selectedCategory} onChange={setSelectedCategory} lang={lang} />
-          </motion.div>
-          
-          {/* Content Grid */}
-          <div className="content-grid">
-            {/* Left Column */}
-            <div className="content-left">
-              {/* Templates */}
-              <div className="templates-grid">
-                {filteredTemplates.map((template) => (
-                  <TemplateCard
-                    key={template.id}
-                    template={template}
-                    isSelected={selectedTemplate?.id === template.id}
-                    onClick={() => handleTemplateSelect(template)}
-                    lang={lang}
-                  />
-                ))}
-              </div>
-              
-              {/* Form */}
-              <AnimatePresence>
-                {selectedTemplate && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="form-panel"
-                  >
-                    <div className="form-header">
-                      <div className="form-icon">
-                        {selectedTemplate.icon}
-                      </div>
-                      <div>
-                        <span className="form-title">{getTemplateName(selectedTemplate, lang)}</span>
-                        <p className="form-category">{selectedTemplate.category.toUpperCase()}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="form-body">
-                      {selectedTemplate.variables.map((field) => (
-                        <FormField
-                          key={field.name}
-                          field={field}
-                          value={formData[field.name] || ''}
-                          onChange={(value) => handleFormChange(field.name, value)}
-                          lang={lang}
-                        />
-                      ))}
-                    </div>
-                    
-                    {error && (
-                      <div className="form-error">
-                        {error}
-                      </div>
-                    )}
-                    
-                    <button
-                      onClick={handleGenerate}
-                      disabled={loading}
-                      className="form-submit"
-                    >
-                      {loading ? t.generating : t.generate}
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-            
-            {/* Right Column */}
-            <motion.div 
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="content-right"
-            >
-              <ResultPanel 
-                result={result} 
-                loading={loading}
-                onCopy={handleCopy}
-                copied={copied}
-                lang={lang}
-              />
-            </motion.div>
-          </div>
+          <AnimatePresence mode="wait">
+            {selectedTemplate ? (
+              <motion.div
+                key="workspace"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <Workspace 
+                  template={selectedTemplate} 
+                  lang={lang}
+                  onBack={() => setSelectedTemplate(null)}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="home"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <TemplateGrid lang={lang} onSelect={setSelectedTemplate} />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </main>
       
-      {/* Footer */}
       <footer className="footer">
-        <div className="footer-inner">
-          <span className="footer-text">{t.title}</span>
-          <span className="footer-text">{t.poweredBy}</span>
-        </div>
+        <p className="footer-text">POWERED BY DEEPSEEK</p>
       </footer>
     </>
   );
 }
 
 // ============================================
-// App with Auth Gate
+// App
 // ============================================
-function AppWithAuth() {
+function App() {
   const { isAuthenticated, isLoading } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      setShowLogin(true);
-    }
-  }, [isLoading, isAuthenticated]);
 
   if (isLoading) {
     return (
@@ -521,22 +459,27 @@ function AppWithAuth() {
     );
   }
 
-  if (!isAuthenticated || showLogin) {
-    return <LoginPage onSuccess={() => setShowLogin(false)} />;
+  if (showLogin && !isAuthenticated) {
+    return (
+      <GoogleOAuthProvider clientId={authConfig.googleClientId || ''}>
+        <LoginPage onSuccess={() => setShowLogin(false)} />
+      </GoogleOAuthProvider>
+    );
   }
 
-  return <AppContent />;
-}
-
-// ============================================
-// Main App (with providers)
-// ============================================
-export default function App() {
   return (
-    <GoogleOAuthProvider clientId={authConfig.googleClientId}>
-      <AuthProvider>
-        <AppWithAuth />
-      </AuthProvider>
+    <GoogleOAuthProvider clientId={authConfig.googleClientId || ''}>
+      <AppContent />
     </GoogleOAuthProvider>
   );
 }
+
+function AppWrapper() {
+  return (
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  );
+}
+
+export default AppWrapper;

@@ -61,11 +61,6 @@ function Header({ lang, onLangChange, onBack, inWorkspace }: {
             ))}
           </select>
           
-          <div className="status-badge">
-            <div className="status-dot" />
-            <span className="status-text">DEEPSEEK</span>
-          </div>
-          
           {isAuthenticated ? (
             <UserMenu onLogout={logout} />
           ) : (
@@ -436,10 +431,6 @@ function AppContent() {
           </AnimatePresence>
         </div>
       </main>
-      
-      <footer className="footer">
-        <p className="footer-text">POWERED BY DEEPSEEK</p>
-      </footer>
     </>
   );
 }

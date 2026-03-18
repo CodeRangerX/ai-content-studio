@@ -495,8 +495,455 @@ export function getVariableLabel(variable: { label: string }, lang: Language): s
   return variableLabels[variable.label]?.[lang] || variable.label;
 }
 
+// ============================================
+// 占位符翻译
+// ============================================
+export const placeholderTranslations: Record<string, Record<Language, string>> = {
+  // 英文占位符
+  'e.g., AI tools, productivity, tech news': {
+    zh: '例如：AI工具、生产力、科技新闻',
+    en: 'e.g., AI tools, productivity, tech news',
+    fr: 'ex: outils IA, productivité',
+    ru: 'напр.: AI инструменты',
+    ja: '例：AIツール、生産性',
+    ko: '예: AI 도구, 생산성',
+    de: 'z.B. AI-Tools, Produktivität',
+    es: 'ej: herramientas IA'
+  },
+  'e.g., #AI #Tech': {
+    zh: '例如：#AI #科技',
+    en: 'e.g., #AI #Tech',
+    fr: 'ex: #IA #Tech',
+    ru: 'напр.: #AI #Технологии',
+    ja: '例：#AI #テック',
+    ko: '예: #AI #테크',
+    de: 'z.B. #AI #Tech',
+    es: 'ej: #IA #Tech'
+  },
+  'Your brand name': {
+    zh: '你的品牌名称',
+    en: 'Your brand name',
+    fr: 'Nom de votre marque',
+    ru: 'Название бренда',
+    ja: 'ブランド名',
+    ko: '브랜드명',
+    de: 'Ihr Markenname',
+    es: 'Nombre de su marca'
+  },
+  'Main point you want to convey': {
+    zh: '你想传达的核心信息',
+    en: 'Main point you want to convey',
+    fr: 'Point principal à transmettre',
+    ru: 'Главный посыл',
+    ja: '伝えたいポイント',
+    ko: '전달하고 싶은 핵심',
+    de: 'Hauptbotschaft',
+    es: 'Punto principal a transmitir'
+  },
+  'e.g., young professionals, parents': {
+    zh: '例如：年轻职场人、父母',
+    en: 'e.g., young professionals, parents',
+    fr: 'ex: jeunes professionnels',
+    ru: 'напр.: молодые профессионалы',
+    ja: '例：若いプロフェッショナル',
+    ko: '예: 젊은 전문가',
+    de: 'z.B. junge Berufstätige',
+    es: 'ej: jóvenes profesionales'
+  },
+  'What is the post about?': {
+    zh: '帖子是关于什么的？',
+    en: 'What is the post about?',
+    fr: 'De quoi parle le post?',
+    ru: 'О чем пост?',
+    ja: '投稿について',
+    ko: '게시물 내용',
+    de: 'Worum geht es?',
+    es: '¿De qué trata el post?'
+  },
+  'Describe your image or video content...': {
+    zh: '描述你的图片或视频内容...',
+    en: 'Describe your image or video content...',
+    fr: 'Décrivez votre image ou vidéo...',
+    ru: 'Опишите ваш контент...',
+    ja: '画像や動画を説明...',
+    ko: '이미지나 동영상 내용 설명...',
+    de: 'Beschreiben Sie Ihren Inhalt...',
+    es: 'Describa su imagen o video...'
+  },
+  'e.g., r/technology, r/entrepreneur': {
+    zh: '例如：r/technology, r/entrepreneur',
+    en: 'e.g., r/technology, r/entrepreneur',
+    fr: 'ex: r/technology',
+    ru: 'напр.: r/technology',
+    ja: '例：r/technology',
+    ko: '예: r/technology',
+    de: 'z.B. r/technology',
+    es: 'ej: r/technology'
+  },
+  'What do you want to discuss?': {
+    zh: '你想讨论什么？',
+    en: 'What do you want to discuss?',
+    fr: 'Que voulez-vous discuter?',
+    ru: 'Что хотите обсудить?',
+    ja: '議論したいこと',
+    ko: '토론하고 싶은 주제',
+    de: 'Was möchten Sie diskutieren?',
+    es: '¿Qué quiere discutir?'
+  },
+  'Any relevant context...': {
+    zh: '相关背景信息...',
+    en: 'Any relevant context...',
+    fr: 'Contexte pertinent...',
+    ru: 'Любой контекст...',
+    ja: '関連する背景...',
+    ko: '관련 배경...',
+    de: 'Relevanter Kontext...',
+    es: 'Contexto relevante...'
+  },
+  'e.g., Tech, Finance, Healthcare': {
+    zh: '例如：科技、金融、医疗',
+    en: 'e.g., Tech, Finance, Healthcare',
+    fr: 'ex: Tech, Finance',
+    ru: 'напр.: Технологии',
+    ja: '例：テクノロジー',
+    ko: '예: 테크, 금융',
+    de: 'z.B. Tech, Finanzen',
+    es: 'ej: Tecnología'
+  },
+  'Main message you want to share': {
+    zh: '你想分享的核心信息',
+    en: 'Main message you want to share',
+    fr: 'Message principal à partager',
+    ru: 'Главное сообщение',
+    ja: '共有したいメッセージ',
+    ko: '공유하고 싶은 메시지',
+    de: 'Hauptbotschaft zum Teilen',
+    es: 'Mensaje principal a compartir'
+  },
+  'e.g., CEO, Engineer, Consultant': {
+    zh: '例如：CEO、工程师、顾问',
+    en: 'e.g., CEO, Engineer, Consultant',
+    fr: 'ex: CEO, Ingénieur',
+    ru: 'напр.: CEO, Инженер',
+    ja: '例：CEO、エンジニア',
+    ko: '예: CEO, 엔지니어',
+    de: 'z.B. CEO, Ingenieur',
+    es: 'ej: CEO, Ingeniero'
+  },
+  'What is the video about?': {
+    zh: '视频是关于什么的？',
+    en: 'What is the video about?',
+    fr: 'De quoi traite la vidéo?',
+    ru: 'О чем видео?',
+    ja: '動画の内容',
+    ko: '동영상 주제',
+    de: 'Worum geht es im Video?',
+    es: '¿De qué trata el video?'
+  },
+  'e.g., cooking, fitness, tech': {
+    zh: '例如：烹饪、健身、科技',
+    en: 'e.g., cooking, fitness, tech',
+    fr: 'ex: cuisine, fitness',
+    ru: 'напр.: кулинария',
+    ja: '例：料理、フィットネス',
+    ko: '예: 요리, 피트니스',
+    de: 'z.B. Kochen, Fitness',
+    es: 'ej: cocina, fitness'
+  },
+  'e.g., Online course, SaaS software': {
+    zh: '例如：在线课程、SaaS软件',
+    en: 'e.g., Online course, SaaS software',
+    fr: 'ex: Cours en ligne',
+    ru: 'напр.: Онлайн-курс',
+    ja: '例：オンラインコース',
+    ko: '예: 온라인 강좌',
+    de: 'z.B. Online-Kurs',
+    es: 'ej: Curso online'
+  },
+  'e.g., Free trial, 20% off limited time': {
+    zh: '例如：免费试用、限时8折',
+    en: 'e.g., Free trial, 20% off limited time',
+    fr: 'ex: Essai gratuit',
+    ru: 'напр.: Бесплатный пробный период',
+    ja: '例：無料トライアル',
+    ko: '예: 무료 체험',
+    de: 'z.B. Kostenlose Testversion',
+    es: 'ej: Prueba gratis'
+  },
+  'e.g., Wireless Bluetooth Headphones': {
+    zh: '例如：无线蓝牙耳机',
+    en: 'e.g., Wireless Bluetooth Headphones',
+    fr: 'ex: Écouteurs Bluetooth',
+    ru: 'напр.: Беспроводные наушники',
+    ja: '例：ワイヤレスヘッドフォン',
+    ko: '예: 무선 블루투스 헤드폰',
+    de: 'z.B. Kabellose Kopfhörer',
+    es: 'ej: Auriculares Bluetooth'
+  },
+  'List 3-5 key features': {
+    zh: '列出3-5个核心特点',
+    en: 'List 3-5 key features',
+    fr: 'Listez 3-5 caractéristiques',
+    ru: 'Перечислите 3-5 особенностей',
+    ja: '3-5つの主な特徴を記入',
+    ko: '3-5개 핵심 특징 입력',
+    de: '3-5 Hauptmerkmale auflisten',
+    es: 'Lista 3-5 características'
+  },
+  'e.g., Electronics, Fashion, Home': {
+    zh: '例如：电子产品、时尚、家居',
+    en: 'e.g., Electronics, Fashion, Home',
+    fr: 'ex: Électronique, Mode',
+    ru: 'напр.: Электроника',
+    ja: '例：電子機器',
+    ko: '예: 전자제품',
+    de: 'z.B. Elektronik',
+    es: 'ej: Electrónica'
+  },
+  'e.g., young professionals': {
+    zh: '例如：年轻职场人',
+    en: 'e.g., young professionals',
+    fr: 'ex: jeunes professionnels',
+    ru: 'напр.: молодые профессионалы',
+    ja: '例：若いプロフェッショナル',
+    ko: '예: 젊은 전문가',
+    de: 'z.B. junge Berufstätige',
+    es: 'ej: jóvenes profesionales'
+  },
+  'Keywords to rank for': {
+    zh: '要排名的关键词',
+    en: 'Keywords to rank for',
+    fr: 'Mots-clés pour le classement',
+    ru: 'Ключевые слова',
+    ja: 'ランクしたいキーワード',
+    ko: '순위 올릴 키워드',
+    de: 'Keywords für das Ranking',
+    es: 'Palabras clave para posicionar'
+  },
+  'What is your video about?': {
+    zh: '你的视频是关于什么的？',
+    en: 'What is your video about?',
+    fr: 'De quoi parle votre vidéo?',
+    ru: 'О чем ваше видео?',
+    ja: '動画について',
+    ko: '동영상 주제',
+    de: 'Worum geht es in Ihrem Video?',
+    es: '¿De qué trata su video?'
+  },
+  'What is the blog about?': {
+    zh: '博客是关于什么的？',
+    en: 'What is the blog about?',
+    fr: 'De quoi parle le blog?',
+    ru: 'О чем блог?',
+    ja: 'ブログのテーマ',
+    ko: '블로그 주제',
+    de: 'Worum geht es im Blog?',
+    es: '¿De qué trata el blog?'
+  },
+  'Main keyword to target': {
+    zh: '要定位的主要关键词',
+    en: 'Main keyword to target',
+    fr: 'Mot-clé principal',
+    ru: 'Основное ключевое слово',
+    ja: 'ターゲットキーワード',
+    ko: '타겟 키워드',
+    de: 'Hauptkeyword',
+    es: 'Palabra clave principal'
+  },
+  'Your company': {
+    zh: '你的公司',
+    en: 'Your company',
+    fr: 'Votre entreprise',
+    ru: 'Ваша компания',
+    ja: 'あなたの会社',
+    ko: '회사명',
+    de: 'Ihr Unternehmen',
+    es: 'Su empresa'
+  },
+  'What are you announcing?': {
+    zh: '你要发布什么？',
+    en: 'What are you announcing?',
+    fr: 'Qu\'annoncez-vous?',
+    ru: 'Что вы объявляете?',
+    ja: '発表内容',
+    ko: '공지 내용',
+    de: 'Was kündigen Sie an?',
+    es: '¿Qué está anunciando?'
+  },
+  'Contact email/phone': {
+    zh: '联系邮箱/电话',
+    en: 'Contact email/phone',
+    fr: 'Email/téléphone de contact',
+    ru: 'Контактный email/телефон',
+    ja: '連絡先',
+    ko: '연락처',
+    de: 'Kontakt-E-Mail/Telefon',
+    es: 'Email/teléfono de contacto'
+  },
+  'What are you advertising?': {
+    zh: '你在推广什么？',
+    en: 'What are you advertising?',
+    fr: 'Que faites-vous la promotion?',
+    ru: 'Что вы рекламируете?',
+    ja: '広告内容',
+    ko: '광고 내용',
+    de: 'Was bewerben Sie?',
+    es: '¿Qué está anunciando?'
+  },
+  'Unique selling proposition': {
+    zh: '独特卖点',
+    en: 'Unique selling proposition',
+    fr: 'Proposition de vente unique',
+    ru: 'Уникальное торговое предложение',
+    ja: '独自の販売提案',
+    ko: '고유 판매 제안',
+    de: 'Alleinstellungsmerkmal',
+    es: 'Propuesta de valor única'
+  },
+  'Who is your target?': {
+    zh: '你的目标人群是谁？',
+    en: 'Who is your target?',
+    fr: 'Qui est votre cible?',
+    ru: 'Кто ваша цель?',
+    ja: 'ターゲットは誰？',
+    ko: '타겟은 누구?',
+    de: 'Wer ist Ihre Zielgruppe?',
+    es: '¿Quién es su objetivo?'
+  },
+  // 中文占位符
+  '例如：AI工具、生产力、科技新闻': {
+    en: 'e.g., AI tools, productivity, tech news',
+    zh: '例如：AI工具、生产力、科技新闻',
+    fr: 'ex: outils IA, productivité',
+    ru: 'напр.: AI инструменты',
+    ja: '例：AIツール、生産性',
+    ko: '예: AI 도구, 생산성',
+  },
+  '如：周末放松、美食打卡、生日快乐': {
+    en: 'e.g., weekend chill, food check-in, birthday',
+    zh: '如：周末放松、美食打卡、生日快乐',
+    fr: 'ex: week-end détente',
+    ru: 'напр.: выходные, еда',
+    ja: '例：週末リラックス',
+    ko: '예: 주말 휴식',
+  },
+  '如：咖啡、阳光、治愈': {
+    en: 'e.g., coffee, sunshine, healing',
+    zh: '如：咖啡、阳光、治愈',
+    fr: 'ex: café, soleil',
+    ru: 'напр.: кофе, солнце',
+    ja: '例：コーヒー、日差し',
+    ko: '예: 커피, 햇살',
+  },
+  '如：眼袋去除、减肥产品、课程': {
+    en: 'e.g., eye bag removal, weight loss, course',
+    zh: '如：眼袋去除、减肥产品、课程',
+    fr: 'ex: produits amincissants',
+    ru: 'напр.: курс похудения',
+    ja: '例：アイバッグ除去',
+    ko: '예: 다이어트 제품',
+  },
+  '如：不开刀、0恢复期、见效快': {
+    en: 'e.g., no surgery, zero downtime, fast results',
+    zh: '如：不开刀、0恢复期、见效快',
+    fr: 'ex: sans chirurgie',
+    ru: 'напр.: без операции',
+    ja: '例：メス不要',
+    ko: '예: 수술 없음',
+  },
+  '如：20分钟、3天消肿、减重10斤': {
+    en: 'e.g., 20 mins, 3-day recovery, 5kg weight loss',
+    zh: '如：20分钟、3天消肿、减重10斤',
+    fr: 'ex: 20 min, 3 jours',
+    ru: 'напр.: 20 минут',
+    ja: '例：20分',
+    ko: '예: 20분',
+  },
+  '如：熬夜党、宝妈、上班族': {
+    en: 'e.g., night owls, moms, office workers',
+    zh: '如：熬夜党、宝妈、上班族',
+    fr: 'ex: noctambules',
+    ru: 'напр.: совы',
+    ja: '例：夜型人',
+    ko: '예: 올빼미족',
+  },
+  '如：口红、咖啡店、学习方法': {
+    en: 'e.g., lipstick, cafe, study methods',
+    zh: '如：口红、咖啡店、学习方法',
+    fr: 'ex: rouge à lèvres',
+    ru: 'напр.: помада',
+    ja: '例：口紅',
+    ko: '예: 립스틱',
+  },
+  '最吸引人的特点': {
+    en: 'Most attractive features',
+    zh: '最吸引人的特点',
+    fr: 'Caractéristiques les plus attractives',
+    ru: 'Самые привлекательные особенности',
+    ja: '最も魅力的な特徴',
+    ko: '가장 매력적인 특징',
+  },
+  '如：学生党、上班族': {
+    en: 'e.g., students, office workers',
+    zh: '如：学生党、上班族',
+    fr: 'ex: étudiants',
+    ru: 'напр.: студенты',
+    ja: '例：学生',
+    ko: '예: 학생',
+  },
+  '视频主要内容': {
+    en: 'Main video content',
+    zh: '视频主要内容',
+    fr: 'Contenu principal',
+    ru: 'Основной контент',
+    ja: '動画の主な内容',
+    ko: '동영상 주요 내용',
+  },
+  '文章核心主题': {
+    en: 'Core article topic',
+    zh: '文章核心主题',
+    fr: 'Sujet principal',
+    ru: 'Основная тема',
+    ja: '記事の核心テーマ',
+    ko: '아티클 핵심 주제',
+  },
+  '需要覆盖的关键词': {
+    en: 'Keywords to cover',
+    zh: '需要覆盖的关键词',
+    fr: 'Mots-clés à couvrir',
+    ru: 'Ключевые слова',
+    ja: 'カバーするキーワード',
+    ko: '포함할 키워드',
+  },
+  '商品名称': {
+    en: 'Product name',
+    zh: '商品名称',
+    fr: 'Nom du produit',
+    ru: 'Название товара',
+    ja: '商品名',
+    ko: '제품명',
+  },
+  '如：女装、数码、家居': {
+    en: 'e.g., womenswear, digital, home',
+    zh: '如：女装、数码、家居',
+    fr: 'ex: mode femme',
+    ru: 'напр.: женская одежда',
+    ja: '例：レディース',
+    ko: '예: 여성복',
+  },
+  '商品的主要特点和优势': {
+    en: 'Main features and advantages',
+    zh: '商品的主要特点和优势',
+    fr: 'Principales caractéristiques',
+    ru: 'Основные особенности',
+    ja: '主な特徴と利点',
+    ko: '주요 특징과 장점',
+  },
+};
+
 export function getVariablePlaceholder(variable: { placeholder?: string }, lang: Language): string | undefined {
-  return variable.placeholder;
+  if (!variable.placeholder) return undefined;
+  return placeholderTranslations[variable.placeholder]?.[lang] || variable.placeholder;
 }
 
 export function getOptionLabel(option: { value: string; label: string }, lang: Language): string {

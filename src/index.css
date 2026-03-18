@@ -1379,6 +1379,156 @@ body {
   }
 }
 
+/* ============================================
+   移动端适配
+   ============================================ */
+@media (max-width: 768px) {
+  /* Header */
+  .header {
+    height: auto;
+    padding: 12px 16px;
+  }
+  
+  .header-inner {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  .logo-wrap {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .logo-title {
+    font-size: 16px;
+  }
+  
+  .logo-subtitle {
+    font-size: 10px;
+  }
+  
+  .header-right {
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 8px;
+  }
+  
+  .lang-select {
+    flex: 1;
+  }
+  
+  /* Main */
+  .main {
+    padding: 100px 16px 24px;
+  }
+  
+  /* Hero */
+  .hero-section {
+    padding: 24px 0 32px;
+  }
+  
+  .hero-main-title {
+    font-size: 28px;
+  }
+  
+  .hero-description {
+    font-size: 14px;
+  }
+  
+  /* Template Grid */
+  .template-section {
+    margin-bottom: 32px;
+  }
+  
+  .section-title {
+    font-size: 18px;
+  }
+  
+  .template-cards-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .template-card-new {
+    padding: 16px;
+  }
+  
+  .card-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+  
+  .card-title {
+    font-size: 15px;
+  }
+  
+  .card-desc {
+    font-size: 12px;
+  }
+  
+  /* Workspace */
+  .workspace {
+    padding: 0 0 40px;
+  }
+  
+  .workspace-form,
+  .workspace-result {
+    border-radius: 12px;
+  }
+  
+  .form-header {
+    padding: 16px;
+  }
+  
+  .form-icon {
+    font-size: 24px;
+  }
+  
+  .form-title {
+    font-size: 16px;
+  }
+  
+  .form-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+  }
+  
+  .form-input,
+  .form-select,
+  .form-textarea {
+    font-size: 16px; /* 防止 iOS 自动缩放 */
+  }
+  
+  .generate-btn {
+    padding: 12px;
+    font-size: 14px;
+  }
+  
+  .result-header {
+    padding: 12px 16px;
+  }
+  
+  .result-body {
+    padding: 16px;
+  }
+  
+  .result-content {
+    font-size: 12px;
+  }
+  
+  /* Footer */
+  .footer {
+    padding: 12px;
+  }
+  
+  .footer-text {
+    font-size: 9px;
+  }
+}
+
 .workspace-form {
   background: rgba(26, 26, 30, 0.6);
   border: 1px solid rgba(196, 160, 82, 0.08);

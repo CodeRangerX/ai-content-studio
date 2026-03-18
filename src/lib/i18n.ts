@@ -13,35 +13,24 @@ export const languageNames: Record<Language, string> = {
 };
 
 export const translations: Record<Language, {
-  // Header
   title: string;
   subtitle: string;
   free: string;
-  
-  // Hero
   heroTitle1: string;
   heroTitle2: string;
   heroSub: string;
-  
-  // Categories
   all: string;
   ecommerce: string;
   social: string;
   content: string;
-  
-  // Form
   selectPlaceholder: string;
   generate: string;
   generating: string;
-  
-  // Result
   output: string;
   copy: string;
   copied: string;
   selectTemplate: string;
   creating: string;
-  
-  // Footer
   poweredBy: string;
 }> = {
   zh: {

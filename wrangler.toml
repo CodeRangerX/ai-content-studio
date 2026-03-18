@@ -2,7 +2,13 @@ name = "ai-content-studio"
 compatibility_date = "2024-01-01"
 pages_build_output_dir = "dist"
 
-# D1 Database for user data - 需要在 Cloudflare Dashboard 创建后填入
+# KV Namespace for verification codes & user data
+# 需要在 Cloudflare Dashboard 创建后填入 namespace_id
+# [[kv_namespaces]]
+# binding = "KV"
+# id = "xxx"
+
+# D1 Database for user data (可选，KV 已足够)
 # [[d1_databases]]
 # binding = "DB"
 # database_name = "ai-content-studio-users"

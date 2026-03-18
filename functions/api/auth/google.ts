@@ -26,13 +26,14 @@ interface User {
 }
 
 // 验证 Google ID Token
-async function verifyGoogleToken(token: string): Promise<GoogleUserInfo | null> {
+async function verifyGoogleToken(token: string, clientId?: string): Promise<GoogleUserInfo | null> {
   try {
     const response = await fetch(
       `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`
     );
     
     if (!response.ok) {
+      console.error('Google tokeninfo API failed:', response.status, await response.text());
       return null;
     }
     
@@ -41,17 +42,19 @@ async function verifyGoogleToken(token: string): Promise<GoogleUserInfo | null> 
     // 验证 issuer
     if (userInfo.iss !== 'https://accounts.google.com' && 
         userInfo.iss !== 'accounts.google.com') {
+      console.error('Invalid issuer:', userInfo.iss);
       return null;
     }
     
     // 验证 audience (client ID)
-    const clientId = process.env.GOOGLE_CLIENT_ID;
     if (clientId && userInfo.aud !== clientId) {
+      console.error('Audience mismatch. Expected:', clientId, 'Got:', userInfo.aud);
       return null;
     }
     
     // 验证 token 未过期
     if (userInfo.exp * 1000 < Date.now()) {
+      console.error('Token expired');
       return null;
     }
     
@@ -111,7 +114,7 @@ export async function onRequestPost(context: any) {
     }
 
     // 验证 Google Token
-    const googleUser = await verifyGoogleToken(credential);
+    const googleUser = await verifyGoogleToken(credential, env.GOOGLE_CLIENT_ID);
     
     if (!googleUser) {
       return new Response(JSON.stringify({

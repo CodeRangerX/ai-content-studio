@@ -4,6 +4,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { authConfig } from '../lib/auth';
 
+// 获取 API URL
+const getApiUrl = (path: string) => {
+  const baseUrl = authConfig.apiBaseUrl;
+  if (baseUrl) {
+    return `${baseUrl}${path}`;
+  }
+  return path; // 开发环境使用 Vite 代理
+};
+
 type AuthMode = 'login' | 'register' | 'reset-password';
 
 interface LoginPageProps {
@@ -41,7 +50,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
     
     try {
       const type = mode === 'register' ? 'register' : 'reset_password';
-      const response = await fetch('/api/auth/send-code', {
+      const response = await fetch(getApiUrl('/api/auth/send-code'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, type }),
@@ -110,7 +119,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
         ? { email, password, code }
         : { email, password, rememberMe };
       
-      const response = await fetch(endpoint, {
+      const response = await fetch(getApiUrl(endpoint), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -149,7 +158,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/google', {
+      const response = await fetch(getApiUrl('/api/auth/google'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ credential: credentialResponse.credential }),

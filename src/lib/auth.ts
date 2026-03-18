@@ -2,7 +2,8 @@
 export const authConfig = {
   // Google OAuth Client ID - 需要在 Google Cloud Console 创建
   googleClientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
-  
+  // API 基础 URL
+  apiBaseUrl: import.meta.env.VITE_API_URL || '',
 };
 
 // Token 存储

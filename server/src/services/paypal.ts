@@ -10,8 +10,8 @@ const CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET || '';
 
 // 计划 ID（PayPal Sandbox）
 const PLAN_IDS: Record<string, string> = {
-  'pro_monthly': process.env.PAYPAL_PLAN_MONTHLY || 'P-2XM74161AK3420003NG6AUMA',
-  'pro_yearly': process.env.PAYPAL_PLAN_YEARLY || 'P-24S93445DU6365037NG6AUMI',
+  'pro_monthly': process.env.PAYPAL_PLAN_MONTHLY || 'P-2RU54035EM8580038NG6BE7A',
+  'pro_yearly': process.env.PAYPAL_PLAN_YEARLY || 'P-0CS67175ND420383TNG6BE7I',
 };
 
 // 缓存 access token

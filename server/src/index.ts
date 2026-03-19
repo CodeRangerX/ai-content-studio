@@ -248,6 +248,189 @@ app.post('/api/auth/logout', (c) => {
 });
 
 // ============================================
+// PayPal 订阅路由
+// ============================================
+
+import {
+  createSubscription,
+  getSubscription,
+  cancelSubscription,
+  getUserSubscription,
+  createSubscriptionRecord,
+  updateSubscriptionStatus,
+  hasProAccess,
+} from './services/paypal.js';
+
+// 获取用户订阅状态
+app.get('/api/subscription/status', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ success: false, error: 'UNAUTHORIZED', message: '未登录' }, 401);
+  }
+
+  const token = authHeader.slice(7);
+  const payload = verifyAccessToken(token);
+
+  if (!payload) {
+    return c.json({ success: false, error: 'INVALID_TOKEN', message: 'Token 无效' }, 401);
+  }
+
+  const subscription = getUserSubscription(payload.userId);
+  const isPro = hasProAccess(payload.userId);
+
+  return c.json({
+    success: true,
+    data: {
+      isPro,
+      subscription: subscription ? {
+        plan: subscription.plan,
+        status: subscription.status,
+        currentPeriodEnd: subscription.current_period_end,
+      } : null,
+    },
+  });
+});
+
+// 创建订阅
+app.post('/api/subscription/create', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ success: false, error: 'UNAUTHORIZED', message: '未登录' }, 401);
+  }
+
+  const token = authHeader.slice(7);
+  const payload = verifyAccessToken(token);
+
+  if (!payload) {
+    return c.json({ success: false, error: 'INVALID_TOKEN', message: 'Token 无效' }, 401);
+  }
+
+  try {
+    const body = await c.req.json();
+    const { plan } = body; // 'pro_monthly' | 'pro_yearly'
+
+    if (!['pro_monthly', 'pro_yearly'].includes(plan)) {
+      return c.json({ success: false, error: 'INVALID_PLAN', message: '无效的订阅计划' }, 400);
+    }
+
+    const result = await createSubscription(payload.userId, plan);
+    
+    // 记录订阅
+    createSubscriptionRecord(payload.userId, result.subscriptionId, plan);
+
+    return c.json({
+      success: true,
+      data: {
+        subscriptionId: result.subscriptionId,
+        approvalUrl: result.approvalUrl,
+      },
+    });
+  } catch (error) {
+    console.error('Create subscription error:', error);
+    return c.json({ success: false, error: 'SERVER_ERROR', message: '创建订阅失败' }, 500);
+  }
+});
+
+// 取消订阅
+app.post('/api/subscription/cancel', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ success: false, error: 'UNAUTHORIZED', message: '未登录' }, 401);
+  }
+
+  const token = authHeader.slice(7);
+  const payload = verifyAccessToken(token);
+
+  if (!payload) {
+    return c.json({ success: false, error: 'INVALID_TOKEN', message: 'Token 无效' }, 401);
+  }
+
+  try {
+    const subscription = getUserSubscription(payload.userId);
+    
+    if (!subscription || !subscription.paypal_subscription_id) {
+      return c.json({ success: false, error: 'NO_SUBSCRIPTION', message: '没有活跃的订阅' }, 400);
+    }
+
+    await cancelSubscription(subscription.paypal_subscription_id);
+    
+    // 更新状态
+    updateSubscriptionStatus(subscription.paypal_subscription_id, 'cancelled');
+
+    return c.json({ success: true, message: '订阅已取消，当前周期结束后生效' });
+  } catch (error) {
+    console.error('Cancel subscription error:', error);
+    return c.json({ success: false, error: 'SERVER_ERROR', message: '取消订阅失败' }, 500);
+  }
+});
+
+// PayPal Webhook
+app.post('/api/webhook/paypal', async (c) => {
+  try {
+    const event = await c.req.json();
+    
+    console.log('PayPal Webhook Event:', event.event_type);
+
+    switch (event.event_type) {
+      case 'BILLING.SUBSCRIPTION.ACTIVATED': {
+        const subscriptionId = event.resource.id;
+        const customId = event.resource.custom_id; // userId
+        
+        // 获取订阅详情
+        const subDetails = await getSubscription(subscriptionId);
+        
+        updateSubscriptionStatus(
+          subscriptionId, 
+          'active',
+          subDetails.billing_info?.next_billing_time
+        );
+        
+        console.log(`✅ Subscription activated: ${subscriptionId} for user ${customId}`);
+        break;
+      }
+      
+      case 'BILLING.SUBSCRIPTION.CANCELLED': {
+        const subscriptionId = event.resource.id;
+        updateSubscriptionStatus(subscriptionId, 'cancelled');
+        console.log(`Subscription cancelled: ${subscriptionId}`);
+        break;
+      }
+      
+      case 'BILLING.SUBSCRIPTION.EXPIRED': {
+        const subscriptionId = event.resource.id;
+        updateSubscriptionStatus(subscriptionId, 'expired');
+        console.log(`Subscription expired: ${subscriptionId}`);
+        break;
+      }
+      
+      case 'BILLING.SUBSCRIPTION.PAYMENT.FAILED': {
+        const subscriptionId = event.resource.id;
+        updateSubscriptionStatus(subscriptionId, 'payment_failed');
+        console.log(`Payment failed: ${subscriptionId}`);
+        break;
+      }
+      
+      case 'PAYMENT.SALE.COMPLETED': {
+        // 记录支付成功
+        console.log(`Payment completed: ${event.resource.id}`);
+        break;
+      }
+      
+      default:
+        console.log(`Unhandled event type: ${event.event_type}`);
+    }
+
+    return c.json({ status: 'ok' });
+  } catch (error) {
+    console.error('PayPal webhook error:', error);
+    return c.json({ status: 'error' }, 500);
+  }
+});
+
+// ============================================
 // 启动服务器
 // ============================================
 const PORT = parseInt(process.env.PORT || '3001');

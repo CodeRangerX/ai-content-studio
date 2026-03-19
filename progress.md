@@ -1,6 +1,30 @@
 # 内容工坊 - 进度日志
 
-## 2024-03-18
+## 2026-03-19
+
+### 完成事项
+- [x] **域名检查**
+  - content-studio-ai.shop ⚠️ DNS 无响应（配置问题）
+  - pro.content-studio-ai.shop ✅ HTTP 200
+  - api.content-studio-ai.shop ⚠️ 暂不使用（用 Railway 原始地址）
+- [x] **Resend 邮件服务配置**
+  - 域名：send.content-studio-ai.shop
+  - Region: ap-northeast-1 (东京)
+  - DNS 验证通过
+  - API Key 已添加到 Railway
+- [x] **验证码邮件发送测试通过**
+- [x] **恢复登录按钮功能**
+  - 将"免费使用"改为"登录"按钮
+  - 点击后显示登录页面
+
+### 待办事项
+- [ ] 测试完整登录流程（邮箱注册/登录）
+- [ ] 测试 Google 登录
+- [ ] Railway Volume 配置（数据持久化）
+
+---
+
+## 2026-03-18
 
 ### 会话记录
 - **时间**: 08:59 GMT+8 - 23:41 GMT+8
@@ -16,7 +40,6 @@
 - [x] **域名配置**
   - [x] DNS 记录已添加
   - [x] Zone 状态已 active
-  - [ ] 根域名和子域名访问异常（待检查）
 - [x] **UI 优化**
   - [x] 全新分步引导式设计
   - [x] 登录页样式修复
@@ -28,15 +51,6 @@
   - [x] Placeholder 多语言
   - [x] 生成内容语言跟随设置
 - [x] **移除 DeepSeek 标识**
-
-### 待办事项
-- [x] **域名检查 (2024-03-19 08:56)**
-  - content-studio-ai.shop ✅ HTTP 200
-  - pro.content-studio-ai.shop ✅ HTTP 200
-  - api.content-studio-ai.shop ⚠️ HTTP 404 (DNS正常，后端路由待检查)
-- [ ] Resend 域名验证完成
-- [ ] Railway Volume 配置（数据持久化）
-- [ ] 测试完整登录流程
 
 ---
 

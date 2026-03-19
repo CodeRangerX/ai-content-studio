@@ -64,10 +64,45 @@ export async function initDatabase() {
     )
   `);
 
+  // 创建订阅表
+  db.run(`
+    CREATE TABLE IF NOT EXISTS subscriptions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      paypal_subscription_id TEXT,
+      paypal_plan_id TEXT,
+      status TEXT NOT NULL DEFAULT 'inactive',
+      plan TEXT NOT NULL DEFAULT 'free',
+      current_period_start TEXT,
+      current_period_end TEXT,
+      cancel_at_period_end INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  // 创建支付记录表
+  db.run(`
+    CREATE TABLE IF NOT EXISTS payments (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      subscription_id TEXT,
+      paypal_order_id TEXT,
+      amount INTEGER,
+      currency TEXT DEFAULT 'USD',
+      status TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
   // 创建索引
   db.run(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_verification_codes ON verification_codes(email, type)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens ON refresh_tokens(token)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_subscriptions_paypal ON subscriptions(paypal_subscription_id)`);
 
   // 保存到文件
   saveDatabase();

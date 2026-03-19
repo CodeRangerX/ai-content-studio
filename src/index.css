@@ -160,6 +160,24 @@ body {
   color: #c4a052;
 }
 
+.login-btn {
+  padding: 8px 20px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #c4a052, #e8c068);
+  border: none;
+  font-family: 'Space Mono', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0a0a0f;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.login-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(196, 160, 82, 0.3);
+}
+
 /* Language Selector */
 .lang-select {
   padding: 8px 32px 8px 12px;

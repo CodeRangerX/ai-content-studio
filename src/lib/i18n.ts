@@ -16,6 +16,7 @@ export const translations: Record<Language, {
   title: string;
   subtitle: string;
   free: string;
+  login: string;
   heroTitle1: string;
   heroTitle2: string;
   heroSub: string;
@@ -37,6 +38,7 @@ export const translations: Record<Language, {
     title: '内容工坊',
     subtitle: 'CONTENT STUDIO',
     free: '免费使用',
+    login: '登录',
     heroTitle1: '一键生成',
     heroTitle2: '专业文案',
     heroSub: 'POWERED BY DEEPSEEK REASONER',
@@ -58,6 +60,7 @@ export const translations: Record<Language, {
     title: 'Content Studio',
     subtitle: 'CONTENT STUDIO',
     free: 'Free',
+    login: 'Login',
     heroTitle1: 'Generate',
     heroTitle2: 'Professional Content',
     heroSub: 'POWERED BY DEEPSEEK REASONER',
@@ -79,6 +82,7 @@ export const translations: Record<Language, {
     title: 'Studio de Contenu',
     subtitle: 'CONTENT STUDIO',
     free: 'Gratuit',
+    login: 'Connexion',
     heroTitle1: 'Générez',
     heroTitle2: 'Contenu Professionnel',
     heroSub: 'POWERED BY DEEPSEEK REASONER',
@@ -100,6 +104,7 @@ export const translations: Record<Language, {
     title: 'Контент-студия',
     subtitle: 'CONTENT STUDIO',
     free: 'Бесплатно',
+    login: 'Войти',
     heroTitle1: 'Создавайте',
     heroTitle2: 'Профессиональный контент',
     heroSub: 'POWERED BY DEEPSEEK REASONER',
@@ -121,6 +126,7 @@ export const translations: Record<Language, {
     title: 'コンテンツスタジオ',
     subtitle: 'CONTENT STUDIO',
     free: '無料',
+    login: 'ログイン',
     heroTitle1: 'ワンクリックで生成',
     heroTitle2: 'プロフェッショナルなコピー',
     heroSub: 'POWERED BY DEEPSEEK REASONER',
@@ -142,6 +148,7 @@ export const translations: Record<Language, {
     title: '콘텐츠 스튜디오',
     subtitle: 'CONTENT STUDIO',
     free: '무료',
+    login: '로그인',
     heroTitle1: '원클릭 생성',
     heroTitle2: '전문 카피',
     heroSub: 'POWERED BY DEEPSEEK REASONER',
@@ -163,6 +170,7 @@ export const translations: Record<Language, {
     title: 'Content Studio',
     subtitle: 'CONTENT STUDIO',
     free: 'Kostenlos',
+    login: 'Anmelden',
     heroTitle1: 'Erstellen Sie',
     heroTitle2: 'Professionelle Inhalte',
     heroSub: 'POWERED BY DEEPSEEK REASONER',
@@ -184,6 +192,7 @@ export const translations: Record<Language, {
     title: 'Estudio de Contenido',
     subtitle: 'CONTENT STUDIO',
     free: 'Gratis',
+    login: 'Iniciar sesión',
     heroTitle1: 'Genera',
     heroTitle2: 'Contenido Profesional',
     heroSub: 'POWERED BY DEEPSEEK REASONER',

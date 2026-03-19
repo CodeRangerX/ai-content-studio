@@ -21,11 +21,12 @@ import { authConfig } from './lib/auth';
 // ============================================
 // Header
 // ============================================
-function Header({ lang, onLangChange, onBack, inWorkspace }: { 
+function Header({ lang, onLangChange, onBack, inWorkspace, onLogin }: { 
   lang: Language; 
   onLangChange: (lang: Language) => void;
   onBack?: () => void;
   inWorkspace?: boolean;
+  onLogin?: () => void;
 }) {
   const { user, isAuthenticated, logout } = useAuth();
   const t = translations[lang];
@@ -64,7 +65,9 @@ function Header({ lang, onLangChange, onBack, inWorkspace }: {
           {isAuthenticated ? (
             <UserMenu onLogout={logout} />
           ) : (
-            <div className="free-badge">{t.free}</div>
+            <button onClick={onLogin} className="login-btn">
+              {t.login}
+            </button>
           )}
         </div>
       </div>
@@ -388,7 +391,7 @@ function Particles() {
 // ============================================
 // Main App Content
 // ============================================
-function AppContent() {
+function AppContent({ onLogin }: { onLogin: () => void }) {
   const [lang, setLang] = useState<Language>('en');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
 
@@ -400,6 +403,7 @@ function AppContent() {
         onLangChange={setLang} 
         onBack={() => setSelectedTemplate(null)}
         inWorkspace={!!selectedTemplate}
+        onLogin={onLogin}
       />
       
       <main className="main">
@@ -460,7 +464,7 @@ function App() {
 
   return (
     <GoogleOAuthProvider clientId={authConfig.googleClientId || ''}>
-      <AppContent />
+      <AppContent onLogin={() => setShowLogin(true)} />
     </GoogleOAuthProvider>
   );
 }

@@ -133,8 +133,8 @@ export async function createSubscription(
           payer_selected: 'PAYPAL',
           payee_preferred: 'IMMEDIATE_PAYMENT_REQUIRED'
         },
-        return_url: `${process.env.FRONTEND_URL}/subscription/success`,
-        cancel_url: `${process.env.FRONTEND_URL}/subscription/cancel`,
+        return_url: `${process.env.FRONTEND_URL}?subscription=success`,
+        cancel_url: `${process.env.FRONTEND_URL}?subscription=cancel`,
       }
     }),
   });

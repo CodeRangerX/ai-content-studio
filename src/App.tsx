@@ -4,6 +4,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginPage } from './components/LoginPage';
 import { UserMenu } from './components/UserMenu';
+import { PricingPage } from './components/PricingPage';
 import { 
   templates,
   categoryNames,
@@ -16,17 +17,28 @@ import {
   getOptionLabel
 } from './lib/templates';
 import { Language, languageNames, translations } from './lib/i18n';
-import { authConfig } from './lib/auth';
+import { authConfig, getApiUrl } from './lib/auth';
+
+// Page types
+type PageType = 'home' | 'workspace' | 'pricing';
 
 // ============================================
 // Header
 // ============================================
-function Header({ lang, onLangChange, onBack, inWorkspace, onLogin }: { 
+function Header({ 
+  lang, 
+  onLangChange, 
+  onBack, 
+  page,
+  onLogin,
+  onPricing 
+}: { 
   lang: Language; 
   onLangChange: (lang: Language) => void;
   onBack?: () => void;
-  inWorkspace?: boolean;
+  page: PageType;
   onLogin?: () => void;
+  onPricing?: () => void;
 }) {
   const { user, isAuthenticated, logout } = useAuth();
   const t = translations[lang];
@@ -35,7 +47,7 @@ function Header({ lang, onLangChange, onBack, inWorkspace, onLogin }: {
     <header className="header">
       <div className="header-inner">
         <div className="logo-wrap">
-          {inWorkspace && onBack && (
+          {page !== 'home' && onBack && (
             <button onClick={onBack} className="back-btn">
               ←
             </button>
@@ -62,8 +74,14 @@ function Header({ lang, onLangChange, onBack, inWorkspace, onLogin }: {
             ))}
           </select>
           
+          {page === 'home' && (
+            <button onClick={onPricing} className="pricing-link-btn">
+              {lang === 'zh' ? '订阅' : 'Pricing'}
+            </button>
+          )}
+          
           {isAuthenticated ? (
-            <UserMenu onLogout={logout} />
+            <UserMenu onLogout={logout} onPricing={onPricing} />
           ) : (
             <button onClick={onLogin} className="login-btn">
               {t.login}
@@ -207,7 +225,7 @@ function Workspace({
     setResult('');
 
     try {
-      const response = await fetch('/api/generate', {
+      const response = await fetch(getApiUrl('/api/generate'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: generatePrompt() }),
@@ -393,7 +411,40 @@ function Particles() {
 // ============================================
 function AppContent({ onLogin }: { onLogin: () => void }) {
   const [lang, setLang] = useState<Language>('en');
+  const [page, setPage] = useState<PageType>('home');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [subscriptionMessage, setSubscriptionMessage] = useState<string | null>(null);
+
+  // 检测 URL 参数显示订阅消息
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const subscription = params.get('subscription');
+    if (subscription === 'success') {
+      setSubscriptionMessage(lang === 'zh' ? '🎉 订阅成功！感谢您的支持！' : '🎉 Subscription successful! Thank you for your support!');
+      // 清除 URL 参数
+      window.history.replaceState({}, '', window.location.pathname);
+      // 5秒后自动关闭消息
+      setTimeout(() => setSubscriptionMessage(null), 5000);
+    } else if (subscription === 'cancel') {
+      setSubscriptionMessage(lang === 'zh' ? '订阅已取消' : 'Subscription cancelled');
+      window.history.replaceState({}, '', window.location.pathname);
+      setTimeout(() => setSubscriptionMessage(null), 3000);
+    }
+  }, [lang]);
+
+  const handleSelectTemplate = (template: Template) => {
+    setSelectedTemplate(template);
+    setPage('workspace');
+  };
+
+  const handleBack = () => {
+    setPage('home');
+    setSelectedTemplate(null);
+  };
+
+  const handlePricing = () => {
+    setPage('pricing');
+  };
 
   return (
     <>
@@ -401,15 +452,42 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
       <Header 
         lang={lang} 
         onLangChange={setLang} 
-        onBack={() => setSelectedTemplate(null)}
-        inWorkspace={!!selectedTemplate}
+        onBack={handleBack}
+        page={page}
         onLogin={onLogin}
+        onPricing={handlePricing}
       />
+      
+      {/* 订阅成功/取消消息 */}
+      <AnimatePresence>
+        {subscriptionMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="subscription-toast"
+          >
+            {subscriptionMessage}
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       <main className="main">
         <div className="main-inner">
           <AnimatePresence mode="wait">
-            {selectedTemplate ? (
+            {page === 'pricing' ? (
+              <motion.div
+                key="pricing"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <PricingPage 
+                  lang={lang} 
+                  onBack={handleBack}
+                />
+              </motion.div>
+            ) : page === 'workspace' && selectedTemplate ? (
               <motion.div
                 key="workspace"
                 initial={{ opacity: 0 }}
@@ -419,7 +497,7 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
                 <Workspace 
                   template={selectedTemplate} 
                   lang={lang}
-                  onBack={() => setSelectedTemplate(null)}
+                  onBack={handleBack}
                 />
               </motion.div>
             ) : (
@@ -429,7 +507,7 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                <TemplateGrid lang={lang} onSelect={setSelectedTemplate} />
+                <TemplateGrid lang={lang} onSelect={handleSelectTemplate} />
               </motion.div>
             )}
           </AnimatePresence>

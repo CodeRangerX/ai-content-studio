@@ -178,6 +178,27 @@ body {
   box-shadow: 0 4px 12px rgba(196, 160, 82, 0.3);
 }
 
+.pricing-link-btn {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid rgba(196, 160, 82, 0.3);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #c4a052;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pricing-link-btn:hover {
+  background: rgba(196, 160, 82, 0.1);
+  border-color: rgba(196, 160, 82, 0.5);
+}
+
+.user-dropdown-item.pricing {
+  color: #c4a052;
+}
+
 /* Language Selector */
 .lang-select {
   padding: 8px 32px 8px 12px;
@@ -1798,4 +1819,412 @@ body {
   color: #f43f5e;
   font-size: 13px;
   margin-bottom: 16px;
+}
+
+/* ============================================
+   Pricing Page
+   ============================================ */
+
+.pricing-page {
+  padding: 20px 0 60px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.pricing-header {
+  text-align: center;
+  padding: 20px 0 40px;
+}
+
+.pricing-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  background: rgba(26, 26, 30, 0.8);
+  border: 1px solid rgba(196, 160, 82, 0.12);
+  border-radius: 8px;
+  font-size: 14px;
+  color: rgba(245, 243, 239, 0.7);
+  cursor: pointer;
+  margin-bottom: 24px;
+  transition: all 0.2s;
+}
+
+.pricing-back:hover {
+  background: rgba(36, 36, 40, 0.8);
+  border-color: rgba(196, 160, 82, 0.3);
+  color: #f5f3ef;
+}
+
+.pricing-title {
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 36px;
+  font-weight: 600;
+  color: #f5f3ef;
+  margin-bottom: 12px;
+}
+
+.pricing-subtitle {
+  font-size: 16px;
+  color: rgba(245, 243, 239, 0.6);
+}
+
+/* Login Prompt */
+.pricing-login-prompt {
+  text-align: center;
+  padding: 40px;
+  background: rgba(26, 26, 30, 0.6);
+  border: 1px solid rgba(196, 160, 82, 0.08);
+  border-radius: 16px;
+  margin-bottom: 32px;
+}
+
+.pricing-login-prompt p {
+  font-size: 16px;
+  color: rgba(245, 243, 239, 0.7);
+  margin-bottom: 16px;
+}
+
+.pricing-login-btn {
+  padding: 12px 32px;
+  background: linear-gradient(135deg, #c4a052, #d4b062);
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0d0d0f;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pricing-login-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(196, 160, 82, 0.3);
+}
+
+/* Loading */
+.pricing-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  gap: 16px;
+}
+
+.pricing-loading p {
+  font-size: 14px;
+  color: rgba(245, 243, 239, 0.5);
+}
+
+/* Plans Grid */
+.pricing-plans {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .pricing-plans {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+}
+
+/* Pricing Card */
+.pricing-card {
+  position: relative;
+  background: rgba(26, 26, 30, 0.6);
+  border: 1px solid rgba(196, 160, 82, 0.08);
+  border-radius: 16px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s;
+}
+
+.pricing-card:hover {
+  border-color: rgba(196, 160, 82, 0.2);
+}
+
+.pricing-card.current {
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.pricing-card.pro {
+  border-color: rgba(196, 160, 82, 0.2);
+}
+
+.pricing-card.pro:hover {
+  border-color: rgba(196, 160, 82, 0.4);
+}
+
+.pricing-card.yearly {
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+.pricing-card.yearly:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+/* Popular Badge */
+.pricing-card-popular {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 16px;
+  background: linear-gradient(135deg, #c4a052, #d4b062);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0d0d0f;
+  white-space: nowrap;
+}
+
+/* Savings Badge */
+.pricing-card-savings {
+  position: absolute;
+  top: -12px;
+  right: 16px;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* Card Header */
+.pricing-card-header {
+  margin-bottom: 24px;
+}
+
+.pricing-card-name {
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: #f5f3ef;
+  margin-bottom: 12px;
+}
+
+.pricing-card-price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.price-amount {
+  font-size: 42px;
+  font-weight: 700;
+  color: #f5f3ef;
+}
+
+.price-period {
+  font-size: 16px;
+  color: rgba(245, 243, 239, 0.5);
+}
+
+.price-monthly {
+  font-size: 13px;
+  color: rgba(245, 243, 239, 0.4);
+  margin-top: 4px;
+}
+
+/* Features List */
+.pricing-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px;
+  flex: 1;
+}
+
+.pricing-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  font-size: 14px;
+  color: #f5f3ef;
+  border-bottom: 1px solid rgba(196, 160, 82, 0.06);
+}
+
+.pricing-feature:last-child {
+  border-bottom: none;
+}
+
+.pricing-feature.disabled {
+  color: rgba(245, 243, 239, 0.35);
+}
+
+.feature-icon {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.pricing-feature:not(.disabled) .feature-icon {
+  color: #22c55e;
+}
+
+.pricing-feature.disabled .feature-icon {
+  color: rgba(245, 243, 239, 0.25);
+}
+
+.feature-note {
+  font-size: 12px;
+  color: rgba(245, 243, 239, 0.4);
+}
+
+/* Current Plan Badge */
+.pricing-current-badge {
+  padding: 8px 16px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #22c55e;
+  text-align: center;
+  margin-top: auto;
+}
+
+/* Subscription Status */
+.pricing-status {
+  padding: 16px;
+  background: rgba(34, 197, 94, 0.08);
+  border-radius: 10px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: rgba(34, 197, 94, 0.2);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #22c55e;
+  margin-bottom: 8px;
+}
+
+.status-expires {
+  font-size: 12px;
+  color: rgba(245, 243, 239, 0.5);
+}
+
+/* Action Button */
+.pricing-action {
+  margin-top: auto;
+}
+
+.pricing-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #c4a052, #d4b062);
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0d0d0f;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pricing-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(196, 160, 82, 0.3);
+}
+
+.pricing-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pricing-btn.secondary {
+  background: rgba(244, 63, 94, 0.1);
+  border: 1px solid rgba(244, 63, 94, 0.2);
+  color: #f43f5e;
+}
+
+.pricing-btn.secondary:hover:not(:disabled) {
+  background: rgba(244, 63, 94, 0.2);
+  box-shadow: none;
+}
+
+/* Error Message */
+.pricing-error {
+  margin-top: 24px;
+  padding: 16px;
+  background: rgba(244, 63, 94, 0.1);
+  border: 1px solid rgba(244, 63, 94, 0.2);
+  border-radius: 10px;
+  color: #fda4af;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Mobile Pricing */
+@media (max-width: 768px) {
+  .pricing-title {
+    font-size: 28px;
+  }
+  
+  .pricing-subtitle {
+    font-size: 14px;
+  }
+  
+  .pricing-card {
+    padding: 24px 20px;
+  }
+  
+  .pricing-card-name {
+    font-size: 18px;
+  }
+  
+  .price-amount {
+    font-size: 32px;
+  }
+  
+  .pricing-feature {
+    font-size: 13px;
+  }
+}
+
+/* Subscription Toast */
+.subscription-toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 500;
+  box-shadow: 0 10px 40px rgba(16, 185, 129, 0.3);
+  z-index: 1000;
+  animation: toast-bounce 0.5s ease-out;
+}
+
+@keyframes toast-bounce {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  50% {
+    transform: translateX(-50%) translateY(5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }

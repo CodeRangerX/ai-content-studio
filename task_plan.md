@@ -12,50 +12,55 @@
 
 ---
 
-## Phase 0: 基础设施完善 ✅ (当前)
+## Phase 0: 基础设施完善 ✅
 
-**状态：** `in_progress`
+**状态：** `completed` ✅ 完成于 2026-03-19
 
 ### 0.1 后端架构重构（跨平台方案）
 - [x] 决策：Node.js + SQLite 方案
-- [ ] 创建 server/ 目录
-- [ ] 搭建 Hono 框架
-- [ ] 实现 SQLite 数据库层
-- [ ] 迁移认证 API
-- [ ] 实现用户数据持久化
+- [x] 创建 server/ 目录
+- [x] 搭建 Hono 框架
+- [x] 实现 SQLite 数据库层
+- [x] 迁移认证 API
+- [x] 实现用户数据持久化
 
-### 0.2 部署到 Railway（进行中）
-- [ ] 创建 Railway 账号
-- [ ] 部署后端服务
-- [ ] 部署前端静态文件
-- [ ] 配置环境变量
-- [ ] 测试生产环境
+### 0.2 部署到 Railway
+- [x] 创建 Railway 账号
+- [x] 部署后端服务
+- [x] 部署前端静态文件（Cloudflare Pages）
+- [x] 配置环境变量
+- [x] 测试生产环境
 
 ### 0.3 邮件服务配置
-- [ ] 注册 Resend 账号
-- [ ] 获取 API Key
-- [ ] 配置到 Railway 环境变量
+- [x] 注册 Resend 账号
+- [x] 获取 API Key
+- [x] 配置到 Railway 环境变量
+- [x] 验证码邮件测试通过
 
 ### 升级计划（Phase 1+）
 - [ ] 升级到 PostgreSQL（Neon/Supabase）
 - [ ] 迁移数据
 - [ ] 支持更多部署平台
 
-### 预计时间
-**2-3 天**
-
 ---
 
-## Phase 1: 支付系统
+## Phase 1: 支付系统 🔄 (当前)
 
-**状态：** `pending`
+**状态：** `in_progress` - 2026-03-23 更新
 
 ### 1.1 PayPal 接入
-- [ ] PayPal Developer 账号申请
-- [ ] PayPal Checkout SDK 集成
-- [ ] 订阅支付 (Recurring Payments)
-- [ ] Webhook 处理
-- [ ] 支付状态同步
+- [x] PayPal Developer 账号申请
+- [x] PayPal Checkout SDK 集成
+- [x] 订阅支付 (Recurring Payments)
+- [x] 产品和计划创建（Sandbox）
+  - 产品: PROD-95736114V3858520B
+  - 月付: P-2RU54035EM8580038NG6BE7A ($9/月)
+  - 年付: P-0CS67175ND420383TNG6BE7I ($79/年)
+- [x] 后端订阅 API
+- [x] 前端订阅页面（PricingPage.tsx）
+- [ ] PayPal Webhook 配置（需在 Dashboard 添加）
+- [ ] 测试完整订阅流程
+- [ ] 切换到 Live 模式
 
 ### 1.2 替代支付方案调研
 - [ ] Stripe（全球覆盖）
@@ -63,12 +68,12 @@
 - [ ] Paddle（税务处理）
 
 ### 1.3 后端支持
-- [ ] Cloudflare Workers 支付 API
+- [x] 订阅 API 端点
 - [ ] 订单数据表设计
 - [ ] 支付状态机
 
 ### 预计时间
-**2-3 周**
+**2-3 周** - 已用约 1 周
 
 ---
 
@@ -244,20 +249,21 @@
 ## 时间线总览
 
 ```
-2024 Q1 (3月)
-├── Phase 0: 基础设施完善 ✅ 进行中
+2026 Q1 (3月)
+├── Phase 0: 基础设施完善 ✅ 已完成
+└── Phase 1: 支付系统 🔄 进行中
 
-2024 Q2 (4-6月)
-├── Phase 1: 支付系统
+2026 Q2 (4-6月)
+├── Phase 1: 支付系统（收尾）
 ├── Phase 2: 定价与套餐
 └── Phase 3: 会员系统
 
-2024 Q3 (7-9月)
+2026 Q3 (7-9月)
 ├── Phase 4: SEO 优化
 ├── Phase 5: 站点运营
 └── Phase 6: 海外市场 (启动)
 
-2024 Q4 (10-12月)
+2026 Q4 (10-12月)
 ├── Phase 6: 海外市场 (深化)
 └── Phase 7: 产品迭代
 ```

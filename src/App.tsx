@@ -17,7 +17,7 @@ import {
   getOptionLabel
 } from './lib/templates';
 import { Language, languageNames, translations } from './lib/i18n';
-import { authConfig, getApiUrl } from './lib/auth';
+import { authConfig, getApiUrl, TokenManager } from './lib/auth';
 
 // Page types
 type PageType = 'home' | 'workspace' | 'pricing';
@@ -225,9 +225,13 @@ function Workspace({
     setResult('');
 
     try {
+      const token = TokenManager.getAccessToken();
       const response = await fetch(getApiUrl('/api/generate'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ prompt: generatePrompt() }),
       });
 
@@ -414,6 +418,7 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
   const [page, setPage] = useState<PageType>('home');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [subscriptionMessage, setSubscriptionMessage] = useState<string | null>(null);
+  const [pricingKey, setPricingKey] = useState(0); // 用于强制刷新 PricingPage
 
   // 检测 URL 参数显示订阅消息
   useEffect(() => {
@@ -421,6 +426,8 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
     const subscription = params.get('subscription');
     if (subscription === 'success') {
       setSubscriptionMessage(lang === 'zh' ? '🎉 订阅成功！感谢您的支持！' : '🎉 Subscription successful! Thank you for your support!');
+      // 刷新订阅状态
+      setPricingKey(prev => prev + 1);
       // 清除 URL 参数
       window.history.replaceState({}, '', window.location.pathname);
       // 5秒后自动关闭消息
@@ -477,7 +484,7 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
           <AnimatePresence mode="wait">
             {page === 'pricing' ? (
               <motion.div
-                key="pricing"
+                key={`pricing-${pricingKey}`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}

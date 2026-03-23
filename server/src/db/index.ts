@@ -104,6 +104,20 @@ export async function initDatabase() {
   db.run(`CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_subscriptions_paypal ON subscriptions(paypal_subscription_id)`);
 
+  // 创建使用次数追踪表
+  db.run(`
+    CREATE TABLE IF NOT EXISTS usage_tracking (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      date TEXT NOT NULL,
+      count INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE(user_id, date)
+    )
+  `);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_usage_user_date ON usage_tracking(user_id, date)`);
+
   // 保存到文件
   saveDatabase();
 

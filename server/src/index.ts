@@ -8,7 +8,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // 导入数据库初始化
-import { initDatabase } from './db/index.js';
+import { initDatabase, queryOne, run } from './db/index.js';
 
 // 导入服务
 import {
@@ -259,6 +259,7 @@ import {
   createSubscriptionRecord,
   updateSubscriptionStatus,
   hasProAccess,
+  verifyWebhookSignature,
 } from './services/paypal.js';
 
 // 获取用户订阅状态
@@ -370,8 +371,24 @@ app.post('/api/subscription/cancel', async (c) => {
 // PayPal Webhook
 app.post('/api/webhook/paypal', async (c) => {
   try {
-    const event = await c.req.json();
+    // 获取 headers（需要小写）
+    const headers: Record<string, string> = {};
+    c.req.raw.headers.forEach((value, key) => {
+      headers[key.toLowerCase()] = value;
+    });
     
+    // 获取 raw body
+    const body = await c.req.text();
+    
+    // 验证签名
+    const verification = await verifyWebhookSignature(headers, body);
+    
+    if (!verification.valid) {
+      console.error('Webhook verification failed:', verification.error);
+      return c.json({ status: 'error', error: verification.error }, 401);
+    }
+    
+    const event = verification.event;
     console.log('PayPal Webhook Event:', event.event_type);
 
     switch (event.event_type) {
@@ -428,6 +445,180 @@ app.post('/api/webhook/paypal', async (c) => {
     console.error('PayPal webhook error:', error);
     return c.json({ status: 'error' }, 500);
   }
+});
+
+// ============================================
+// 内容生成路由（需要权限验证）
+// ============================================
+
+// API 配置
+const API_CONFIG = {
+  apiKey: process.env.DEEPSEEK_API_KEY || 'sk-sp-51a41d94570b4e9593cf356a62f26089',
+  baseUrl: process.env.DEEPSEEK_BASE_URL || 'https://coding.dashscope.aliyuncs.com',
+  model: process.env.DEEPSEEK_MODEL || 'kimi-k2.5'
+};
+
+// 免费用户每日限制
+const FREE_DAILY_LIMIT = 3;
+
+// 获取用户今日使用次数
+function getTodayUsage(userId: string): number {
+  const today = new Date().toISOString().split('T')[0];
+  const result = queryOne<{ count: number }>(
+    'SELECT count FROM usage_tracking WHERE user_id = ? AND date = ?',
+    [userId, today]
+  );
+  return result?.count || 0;
+}
+
+// 增加使用次数
+function incrementUsage(userId: string): void {
+  const today = new Date().toISOString().split('T')[0];
+  const existing = queryOne<{ id: number }>(
+    'SELECT id FROM usage_tracking WHERE user_id = ? AND date = ?',
+    [userId, today]
+  );
+  
+  if (existing) {
+    run(
+      'UPDATE usage_tracking SET count = count + 1 WHERE user_id = ? AND date = ?',
+      [userId, today]
+    );
+  } else {
+    run(
+      'INSERT INTO usage_tracking (user_id, date, count) VALUES (?, ?, 1)',
+      [userId, today]
+    );
+  }
+}
+
+// 生成内容 API
+app.post('/api/generate', async (c) => {
+  // 验证用户登录
+  const authHeader = c.req.header('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ 
+      success: false, 
+      error: 'UNAUTHORIZED', 
+      message: '请先登录' 
+    }, 401);
+  }
+
+  const token = authHeader.slice(7);
+  const payload = verifyAccessToken(token);
+
+  if (!payload) {
+    return c.json({ 
+      success: false, 
+      error: 'INVALID_TOKEN', 
+      message: '登录已过期，请重新登录' 
+    }, 401);
+  }
+
+  try {
+    const body = await c.req.json();
+    const { prompt } = body;
+
+    if (!prompt) {
+      return c.json({ 
+        success: false, 
+        error: 'BAD_REQUEST', 
+        message: '请输入内容' 
+      }, 400);
+    }
+
+    // 检查用户权限
+    const isPro = hasProAccess(payload.userId);
+    
+    if (!isPro) {
+      // 免费用户检查使用次数
+      const todayUsage = getTodayUsage(payload.userId);
+      
+      if (todayUsage >= FREE_DAILY_LIMIT) {
+        return c.json({ 
+          success: false, 
+          error: 'LIMIT_EXCEEDED', 
+          message: '今日免费使用次数已用完，请升级 Pro 解锁无限使用',
+          data: {
+            usage: todayUsage,
+            limit: FREE_DAILY_LIMIT
+          }
+        }, 403);
+      }
+    }
+
+    // 调用 AI API
+    const response = await fetch(`${API_CONFIG.baseUrl}/v1/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_CONFIG.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: API_CONFIG.model,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 4000,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      return c.json({ 
+        success: false, 
+        error: 'AI_ERROR', 
+        message: data.error.message || '生成失败' 
+      }, 500);
+    }
+
+    // 免费用户增加使用次数
+    if (!isPro) {
+      incrementUsage(payload.userId);
+    }
+
+    return c.json({ 
+      success: true,
+      content: data.choices[0]?.message?.content || '无结果' 
+    });
+
+  } catch (error: any) {
+    console.error('Generate error:', error);
+    return c.json({ 
+      success: false, 
+      error: 'SERVER_ERROR', 
+      message: '服务暂时不可用，请稍后重试' 
+    }, 500);
+  }
+});
+
+// 获取用户使用情况
+app.get('/api/usage', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ success: false, error: 'UNAUTHORIZED' }, 401);
+  }
+
+  const token = authHeader.slice(7);
+  const payload = verifyAccessToken(token);
+
+  if (!payload) {
+    return c.json({ success: false, error: 'INVALID_TOKEN' }, 401);
+  }
+
+  const isPro = hasProAccess(payload.userId);
+  const todayUsage = getTodayUsage(payload.userId);
+
+  return c.json({
+    success: true,
+    data: {
+      isPro,
+      todayUsage,
+      dailyLimit: isPro ? null : FREE_DAILY_LIMIT,
+      remaining: isPro ? null : Math.max(0, FREE_DAILY_LIMIT - todayUsage)
+    }
+  });
 });
 
 // ============================================

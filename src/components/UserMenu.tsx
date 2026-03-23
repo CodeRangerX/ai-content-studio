@@ -4,9 +4,10 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface UserMenuProps {
   onLogout: () => void;
+  onPricing?: () => void;
 }
 
-export function UserMenu({ onLogout }: UserMenuProps) {
+export function UserMenu({ onLogout, onPricing }: UserMenuProps) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -71,6 +72,21 @@ export function UserMenu({ onLogout }: UserMenuProps) {
             </div>
             
             <div className="user-dropdown-divider" />
+            
+            {onPricing && (
+              <div 
+                className="user-dropdown-item pricing"
+                onClick={() => {
+                  setIsOpen(false);
+                  onPricing();
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                <span>Pro 订阅</span>
+              </div>
+            )}
             
             <div 
               className="user-dropdown-item logout"

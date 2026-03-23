@@ -2228,3 +2228,44 @@ body {
     transform: translateX(-50%) translateY(0);
   }
 }
+
+/* Login Banner */
+.login-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  margin: 0 0 16px 0;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.login-banner:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.25));
+  border-color: rgba(99, 102, 241, 0.5);
+  transform: translateY(-1px);
+}
+
+.login-banner-icon {
+  font-size: 20px;
+}
+
+.login-banner-text {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: #a5b4fc;
+}
+
+.login-banner-arrow {
+  font-size: 16px;
+  color: #818cf8;
+  transition: transform 0.2s;
+}
+
+.login-banner:hover .login-banner-arrow {
+  transform: translateX(4px);
+}

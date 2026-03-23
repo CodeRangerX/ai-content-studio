@@ -44,9 +44,9 @@
 
 ---
 
-## Phase 1: 支付系统 🔄 (当前)
+## Phase 1: 支付系统 ✅ (待测试)
 
-**状态：** `in_progress` - 2026-03-23 更新
+**状态：** `completed` - 2026-03-23 更新，待 Webhook 配置和测试
 
 ### 1.1 PayPal 接入
 - [x] PayPal Developer 账号申请
@@ -58,9 +58,17 @@
   - 年付: P-0CS67175ND420383TNG6BE7I ($79/年)
 - [x] 后端订阅 API
 - [x] 前端订阅页面（PricingPage.tsx）
-- [ ] PayPal Webhook 配置（需在 Dashboard 添加）
+- [x] **🚨 Webhook 签名验证**（安全修复）
+- [ ] PayPal Webhook 配置（需在 Dashboard 添加 URL）
+- [ ] 配置 PAYPAL_WEBHOOK_ID 环境变量
 - [ ] 测试完整订阅流程
 - [ ] 切换到 Live 模式
+
+### 1.2 安全修复 (2026-03-23)
+- [x] Webhook 签名验证 - 防止伪造请求
+- [x] Token 缓存计算修复 - 防止 API 限流
+- [x] 前端 Authorization header - 正确传递 token
+- [x] 订阅成功状态刷新 - 优化用户体验
 
 ### 1.2 替代支付方案调研
 - [ ] Stripe（全球覆盖）

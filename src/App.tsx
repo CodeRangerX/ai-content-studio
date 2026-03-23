@@ -176,12 +176,15 @@ function TemplateGrid({ lang, onSelect }: { lang: Language; onSelect: (t: Templa
 function Workspace({ 
   template, 
   lang, 
-  onBack 
+  onBack,
+  onLogin 
 }: { 
   template: Template; 
   lang: Language;
   onBack: () => void;
+  onLogin: () => void;
 }) {
+  const { isAuthenticated } = useAuth();
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
@@ -211,6 +214,13 @@ function Workspace({
   };
 
   const handleGenerate = async () => {
+    // 检查登录状态
+    if (!isAuthenticated) {
+      setError(lang === 'zh' ? '请先登录后再生成内容' : 'Please login to generate content');
+      setTimeout(() => onLogin(), 1500);
+      return;
+    }
+
     const missingFields = template.variables
       .filter((v) => v.required && !formData[v.name])
       .map((v) => getVariableLabel(v, lang));
@@ -237,8 +247,15 @@ function Workspace({
 
       const data = await response.json();
       
+      // 处理未授权错误
+      if (response.status === 401) {
+        setError(lang === 'zh' ? '登录已过期，请重新登录' : 'Session expired, please login again');
+        setTimeout(() => onLogin(), 1500);
+        return;
+      }
+      
       if (data.error) {
-        setError(data.error);
+        setError(data.message || data.error);
       } else {
         setResult(data.content || (lang === 'zh' ? '生成失败，请重试' : 'Generation failed, please try again'));
       }
@@ -268,6 +285,17 @@ function Workspace({
             <span className="form-icon">{template.icon}</span>
             <h2 className="form-title">{getTemplateName(template, lang)}</h2>
           </div>
+          
+          {/* 未登录提示 */}
+          {!isAuthenticated && (
+            <div className="login-banner" onClick={onLogin}>
+              <span className="login-banner-icon">🔐</span>
+              <span className="login-banner-text">
+                {lang === 'zh' ? '点击登录后即可生成内容' : 'Login to generate content'}
+              </span>
+              <span className="login-banner-arrow">→</span>
+            </div>
+          )}
           
           <div className="form-body">
             {template.variables.map((field) => (
@@ -505,6 +533,7 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
                   template={selectedTemplate} 
                   lang={lang}
                   onBack={handleBack}
+                  onLogin={onLogin}
                 />
               </motion.div>
             ) : (

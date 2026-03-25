@@ -288,7 +288,7 @@ export async function verifyWebhookSignature(
 
 // ========== 数据库操作 ==========
 
-// 获取用户订阅
+// 获取用户订阅（包括 pending 状态，以便显示订阅中的状态）
 export function getUserSubscription(userId: string): {
   id: string;
   user_id: string;
@@ -297,11 +297,23 @@ export function getUserSubscription(userId: string): {
   plan: string;
   current_period_end: string | null;
 } | null {
-  return queryOne(`
+  // 先查活跃订阅
+  const active = queryOne(`
     SELECT * FROM subscriptions 
     WHERE user_id = ? AND status = 'active'
     ORDER BY created_at DESC LIMIT 1
   `, [userId]);
+  
+  if (active) return active;
+  
+  // 再查待处理的订阅（用户刚订阅但 Webhook 还没触发）
+  const pending = queryOne(`
+    SELECT * FROM subscriptions 
+    WHERE user_id = ? AND status IN ('pending', 'active')
+    ORDER BY created_at DESC LIMIT 1
+  `, [userId]);
+  
+  return pending;
 }
 
 // 创建订阅记录

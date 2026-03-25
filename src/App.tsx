@@ -5,6 +5,8 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginPage } from './components/LoginPage';
 import { UserMenu } from './components/UserMenu';
 import { PricingPage } from './components/PricingPage';
+import { AccountPage } from './components/AccountPage';
+import { CreditsPage } from './components/CreditsPage';
 import { 
   templates,
   categoryNames,
@@ -20,7 +22,7 @@ import { Language, languageNames, translations } from './lib/i18n';
 import { authConfig, getApiUrl, TokenManager } from './lib/auth';
 
 // Page types
-type PageType = 'home' | 'workspace' | 'pricing';
+type PageType = 'home' | 'workspace' | 'pricing' | 'account' | 'credits';
 
 // ============================================
 // Header
@@ -31,7 +33,9 @@ function Header({
   onBack, 
   page,
   onLogin,
-  onPricing 
+  onPricing,
+  onAccount,
+  creditBalance
 }: { 
   lang: Language; 
   onLangChange: (lang: Language) => void;
@@ -39,6 +43,8 @@ function Header({
   page: PageType;
   onLogin?: () => void;
   onPricing?: () => void;
+  onAccount?: () => void;
+  creditBalance?: number | null;
 }) {
   const { user, isAuthenticated, logout } = useAuth();
   const t = translations[lang];
@@ -74,6 +80,14 @@ function Header({
             ))}
           </select>
           
+          {/* 点数余额显示 */}
+          {isAuthenticated && creditBalance !== null && (
+            <button onClick={onAccount} className="credit-balance-btn">
+              <span className="credit-icon">💎</span>
+              <span>{creditBalance}</span>
+            </button>
+          )}
+          
           {page === 'home' && (
             <button onClick={onPricing} className="pricing-link-btn">
               {lang === 'zh' ? '订阅' : 'Pricing'}
@@ -81,7 +95,7 @@ function Header({
           )}
           
           {isAuthenticated ? (
-            <UserMenu onLogout={logout} onPricing={onPricing} />
+            <UserMenu onLogout={logout} onPricing={onPricing} onAccount={onAccount} />
           ) : (
             <button onClick={onLogin} className="login-btn">
               {t.login}
@@ -442,24 +456,82 @@ function Particles() {
 // Main App Content
 // ============================================
 function AppContent({ onLogin }: { onLogin: () => void }) {
+  const { isAuthenticated } = useAuth();
   const [lang, setLang] = useState<Language>('en');
   const [page, setPage] = useState<PageType>('home');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [subscriptionMessage, setSubscriptionMessage] = useState<string | null>(null);
   const [pricingKey, setPricingKey] = useState(0); // 用于强制刷新 PricingPage
+  const [creditBalance, setCreditBalance] = useState<number | null>(null);
+
+  // 获取点数余额
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchCreditBalance();
+    } else {
+      setCreditBalance(null);
+    }
+  }, [isAuthenticated]);
+
+  const fetchCreditBalance = async () => {
+    try {
+      const token = TokenManager.getAccessToken();
+      if (!token) return;
+      
+      const response = await fetch(getApiUrl('/api/credits/balance'), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await response.json();
+      if (data.success && data.data) {
+        setCreditBalance(data.data.balance);
+      }
+    } catch (err) {
+      console.error('Failed to fetch credit balance:', err);
+    }
+  };
 
   // 检测 URL 参数显示订阅消息
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const subscription = params.get('subscription');
     if (subscription === 'success') {
-      setSubscriptionMessage(lang === 'zh' ? '🎉 订阅成功！感谢您的支持！' : '🎉 Subscription successful! Thank you for your support!');
-      // 刷新订阅状态
-      setPricingKey(prev => prev + 1);
-      // 清除 URL 参数
-      window.history.replaceState({}, '', window.location.pathname);
-      // 5秒后自动关闭消息
-      setTimeout(() => setSubscriptionMessage(null), 5000);
+      // 验证并激活订阅
+      const verifySubscription = async () => {
+        try {
+          const token = TokenManager.getAccessToken();
+          if (!token) return;
+          
+          const response = await fetch(getApiUrl('/api/subscription/verify'), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          const data = await response.json();
+          if (data.success) {
+            setSubscriptionMessage(lang === 'zh' ? '🎉 订阅成功！感谢您的支持！' : '🎉 Subscription successful! Thank you for your support!');
+          } else {
+            setSubscriptionMessage(lang === 'zh' ? '⏳ 订阅处理中...' : '⏳ Subscription processing...');
+          }
+        } catch (err) {
+          console.error('Verify subscription error:', err);
+          setSubscriptionMessage(lang === 'zh' ? '🎉 订阅成功！' : '🎉 Subscription successful!');
+        }
+        
+        // 刷新订阅状态
+        setPricingKey(prev => prev + 1);
+        // 清除 URL 参数
+        window.history.replaceState({}, '', window.location.pathname);
+        // 5秒后自动关闭消息
+        setTimeout(() => setSubscriptionMessage(null), 5000);
+      };
+      
+      verifySubscription();
     } else if (subscription === 'cancel') {
       setSubscriptionMessage(lang === 'zh' ? '订阅已取消' : 'Subscription cancelled');
       window.history.replaceState({}, '', window.location.pathname);
@@ -481,6 +553,19 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
     setPage('pricing');
   };
 
+  const handleAccount = () => {
+    setPage('account');
+  };
+
+  const handleCredits = () => {
+    setPage('credits');
+  };
+
+  const handleCreditsSuccess = () => {
+    fetchCreditBalance();
+    setPage('account');
+  };
+
   return (
     <>
       <Particles />
@@ -491,6 +576,8 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
         page={page}
         onLogin={onLogin}
         onPricing={handlePricing}
+        onAccount={handleAccount}
+        creditBalance={creditBalance}
       />
       
       {/* 订阅成功/取消消息 */}
@@ -520,6 +607,32 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
                 <PricingPage 
                   lang={lang} 
                   onBack={handleBack}
+                />
+              </motion.div>
+            ) : page === 'account' ? (
+              <motion.div
+                key="account"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <AccountPage 
+                  lang={lang} 
+                  onBack={handleBack}
+                  onBuyCredits={handleCredits}
+                />
+              </motion.div>
+            ) : page === 'credits' ? (
+              <motion.div
+                key="credits"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <CreditsPage 
+                  lang={lang} 
+                  onBack={handleBack}
+                  onSuccess={handleCreditsSuccess}
                 />
               </motion.div>
             ) : page === 'workspace' && selectedTemplate ? (

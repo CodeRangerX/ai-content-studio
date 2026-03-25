@@ -118,6 +118,82 @@ export async function initDatabase() {
   `);
   db.run(`CREATE INDEX IF NOT EXISTS idx_usage_user_date ON usage_tracking(user_id, date)`);
 
+  // ============================================
+  // 点数系统相关表
+  // ============================================
+
+  // 用户点数余额
+  db.run(`
+    CREATE TABLE IF NOT EXISTS user_credits (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL UNIQUE,
+      balance INTEGER DEFAULT 0,
+      total_purchased INTEGER DEFAULT 0,
+      total_used INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  // 点数购买记录
+  db.run(`
+    CREATE TABLE IF NOT EXISTS credit_purchases (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      package_id TEXT NOT NULL,
+      points INTEGER NOT NULL,
+      price INTEGER NOT NULL,
+      paypal_order_id TEXT,
+      status TEXT DEFAULT 'pending',
+      created_at TEXT DEFAULT (datetime('now')),
+      completed_at TEXT,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  // 点数交易记录
+  db.run(`
+    CREATE TABLE IF NOT EXISTS credit_transactions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      type TEXT NOT NULL,
+      points INTEGER NOT NULL,
+      balance_after INTEGER NOT NULL,
+      description TEXT,
+      related_id TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  // 生成历史记录
+  db.run(`
+    CREATE TABLE IF NOT EXISTS generations (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      template_id TEXT NOT NULL,
+      template_name TEXT NOT NULL,
+      input_data TEXT NOT NULL,
+      output_content TEXT,
+      credits_used INTEGER DEFAULT 0,
+      cost_type TEXT NOT NULL,
+      tokens_input INTEGER,
+      tokens_output INTEGER,
+      generation_time_ms INTEGER,
+      status TEXT DEFAULT 'success',
+      error_message TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  // 点数相关索引
+  db.run(`CREATE INDEX IF NOT EXISTS idx_user_credits ON user_credits(user_id)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_credit_purchases_user ON credit_purchases(user_id)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_credit_transactions_user ON credit_transactions(user_id, created_at DESC)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_generations_user ON generations(user_id, created_at DESC)`);
+
   // 保存到文件
   saveDatabase();
 

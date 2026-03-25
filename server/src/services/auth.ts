@@ -13,6 +13,7 @@ import {
   verifyCode, 
   canSendCode 
 } from '../db/codes.js';
+import { grantNewUserCredits } from '../db/credits.js';
 
 const SALT_ROUNDS = 12;
 
@@ -179,6 +180,9 @@ export async function register(data: RegisterData): Promise<AuthResult> {
     provider: 'email',
   });
 
+  // 新用户赠送点数
+  grantNewUserCredits(user.id, 15);
+
   // 生成 Token
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user.id);
@@ -284,6 +288,8 @@ export async function googleLogin(credential: string): Promise<AuthResult> {
         provider: 'google',
         providerId: googleUser.sub,
       });
+      // 新用户赠送点数
+      grantNewUserCredits(user.id, 15);
     }
   }
 

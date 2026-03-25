@@ -368,6 +368,69 @@ app.post('/api/subscription/cancel', async (c) => {
   }
 });
 
+// 验证并激活订阅（用户从 PayPal 返回后调用）
+app.post('/api/subscription/verify', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ success: false, error: 'UNAUTHORIZED', message: '未登录' }, 401);
+  }
+
+  const token = authHeader.slice(7);
+  const payload = verifyAccessToken(token);
+
+  if (!payload) {
+    return c.json({ success: false, error: 'INVALID_TOKEN', message: 'Token 无效' }, 401);
+  }
+
+  try {
+    const subscription = getUserSubscription(payload.userId);
+    
+    if (!subscription || !subscription.paypal_subscription_id) {
+      return c.json({ success: false, error: 'NO_SUBSCRIPTION', message: '没有订阅记录' }, 400);
+    }
+
+    // 从 PayPal 获取最新状态
+    const paypalSub = await getSubscription(subscription.paypal_subscription_id);
+    
+    console.log('PayPal subscription status:', paypalSub.status);
+    
+    // 更新本地状态
+    if (paypalSub.status === 'ACTIVE') {
+      updateSubscriptionStatus(
+        subscription.paypal_subscription_id, 
+        'active',
+        paypalSub.billing_info?.next_billing_time
+      );
+      
+      return c.json({ 
+        success: true, 
+        message: '订阅已激活',
+        data: {
+          plan: subscription.plan,
+          status: 'active',
+          currentPeriodEnd: paypalSub.billing_info?.next_billing_time
+        }
+      });
+    } else if (paypalSub.status === 'APPROVAL_PENDING') {
+      return c.json({ 
+        success: false, 
+        error: 'PENDING', 
+        message: '订阅等待批准中，请完成支付' 
+      });
+    } else {
+      return c.json({ 
+        success: false, 
+        error: 'INACTIVE', 
+        message: `订阅状态: ${paypalSub.status}` 
+      });
+    }
+  } catch (error) {
+    console.error('Verify subscription error:', error);
+    return c.json({ success: false, error: 'SERVER_ERROR', message: '验证订阅失败' }, 500);
+  }
+});
+
 // PayPal Webhook
 app.post('/api/webhook/paypal', async (c) => {
   try {
@@ -451,6 +514,26 @@ app.post('/api/webhook/paypal', async (c) => {
 // 内容生成路由（需要权限验证）
 // ============================================
 
+// 导入点数相关模块
+import {
+  CREDIT_PACKAGES,
+  CreditPackageId,
+  getOrCreateUserCredits,
+  hasEnoughCredits,
+  deductCredits,
+  createPurchase,
+  getPurchaseById,
+  completePurchase,
+  getUserPurchases,
+  getTransactions,
+  getTransactionSummary,
+  createGeneration,
+  updateGenerationResult,
+  markGenerationFailed,
+  getUserGenerations,
+  getUserGenerationStats,
+} from './db/credits.js';
+
 // API 配置
 const API_CONFIG = {
   apiKey: process.env.DEEPSEEK_API_KEY || 'sk-sp-51a41d94570b4e9593cf356a62f26089',
@@ -458,41 +541,7 @@ const API_CONFIG = {
   model: process.env.DEEPSEEK_MODEL || 'kimi-k2.5'
 };
 
-// 免费用户每日限制
-const FREE_DAILY_LIMIT = 3;
-
-// 获取用户今日使用次数
-function getTodayUsage(userId: string): number {
-  const today = new Date().toISOString().split('T')[0];
-  const result = queryOne<{ count: number }>(
-    'SELECT count FROM usage_tracking WHERE user_id = ? AND date = ?',
-    [userId, today]
-  );
-  return result?.count || 0;
-}
-
-// 增加使用次数
-function incrementUsage(userId: string): void {
-  const today = new Date().toISOString().split('T')[0];
-  const existing = queryOne<{ id: number }>(
-    'SELECT id FROM usage_tracking WHERE user_id = ? AND date = ?',
-    [userId, today]
-  );
-  
-  if (existing) {
-    run(
-      'UPDATE usage_tracking SET count = count + 1 WHERE user_id = ? AND date = ?',
-      [userId, today]
-    );
-  } else {
-    run(
-      'INSERT INTO usage_tracking (user_id, date, count) VALUES (?, ?, 1)',
-      [userId, today]
-    );
-  }
-}
-
-// 生成内容 API
+// 生成内容 API（支持订阅和点数）
 app.post('/api/generate', async (c) => {
   // 验证用户登录
   const authHeader = c.req.header('Authorization');
@@ -518,7 +567,7 @@ app.post('/api/generate', async (c) => {
 
   try {
     const body = await c.req.json();
-    const { prompt } = body;
+    const { prompt, templateId, templateName, inputData } = body;
 
     if (!prompt) {
       return c.json({ 
@@ -530,23 +579,38 @@ app.post('/api/generate', async (c) => {
 
     // 检查用户权限
     const isPro = hasProAccess(payload.userId);
+    const userCredits = getOrCreateUserCredits(payload.userId);
     
+    // 判断是否有权限生成
+    let costType: 'subscription' | 'credits' = 'subscription';
+    let creditsUsed = 0;
+
     if (!isPro) {
-      // 免费用户检查使用次数
-      const todayUsage = getTodayUsage(payload.userId);
-      
-      if (todayUsage >= FREE_DAILY_LIMIT) {
+      // 非订阅用户需要检查点数
+      if (userCredits.balance < 1) {
         return c.json({ 
           success: false, 
-          error: 'LIMIT_EXCEEDED', 
-          message: '今日免费使用次数已用完，请升级 Pro 解锁无限使用',
+          error: 'NO_CREDITS', 
+          message: '点数不足，请购买点数或升级 Pro 订阅',
           data: {
-            usage: todayUsage,
-            limit: FREE_DAILY_LIMIT
+            balance: userCredits.balance,
+            isPro: false
           }
         }, 403);
       }
+      costType = 'credits';
+      creditsUsed = 1;
     }
+
+    // 创建生成记录
+    const generation = createGeneration(
+      payload.userId,
+      templateId || 'custom',
+      templateName || '自定义生成',
+      inputData || { prompt }
+    );
+
+    const startTime = Date.now();
 
     // 调用 AI API
     const response = await fetch(`${API_CONFIG.baseUrl}/v1/chat/completions`, {
@@ -563,8 +627,10 @@ app.post('/api/generate', async (c) => {
     });
 
     const data = await response.json();
+    const generationTimeMs = Date.now() - startTime;
 
     if (data.error) {
+      markGenerationFailed(generation.id, data.error.message || '生成失败');
       return c.json({ 
         success: false, 
         error: 'AI_ERROR', 
@@ -572,14 +638,40 @@ app.post('/api/generate', async (c) => {
       }, 500);
     }
 
-    // 免费用户增加使用次数
+    const content = data.choices[0]?.message?.content || '无结果';
+    const tokensInput = data.usage?.prompt_tokens;
+    const tokensOutput = data.usage?.completion_tokens;
+
+    // 扣除点数（非订阅用户）
     if (!isPro) {
-      incrementUsage(payload.userId);
+      deductCredits(
+        payload.userId, 
+        1, 
+        `${templateName || '自定义生成'}`,
+        generation.id
+      );
     }
+
+    // 更新生成记录
+    updateGenerationResult(
+      generation.id,
+      content,
+      creditsUsed,
+      costType,
+      tokensInput,
+      tokensOutput,
+      generationTimeMs
+    );
 
     return c.json({ 
       success: true,
-      content: data.choices[0]?.message?.content || '无结果' 
+      data: {
+        content,
+        generationId: generation.id,
+        creditsUsed,
+        costType,
+        balance: isPro ? null : userCredits.balance - (isPro ? 0 : 1)
+      }
     });
 
   } catch (error: any) {
@@ -592,7 +684,331 @@ app.post('/api/generate', async (c) => {
   }
 });
 
-// 获取用户使用情况
+// ============================================
+// 点数相关 API
+// ============================================
+
+// 获取点数余额
+app.get('/api/credits/balance', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ success: false, error: 'UNAUTHORIZED' }, 401);
+  }
+
+  const token = authHeader.slice(7);
+  const payload = verifyAccessToken(token);
+
+  if (!payload) {
+    return c.json({ success: false, error: 'INVALID_TOKEN' }, 401);
+  }
+
+  const credits = getOrCreateUserCredits(payload.userId);
+  const isPro = hasProAccess(payload.userId);
+
+  return c.json({
+    success: true,
+    data: {
+      balance: credits.balance,
+      totalPurchased: credits.total_purchased,
+      totalUsed: credits.total_used,
+      isPro,
+      canUse: isPro || credits.balance > 0
+    }
+  });
+});
+
+// 获取可用点数包
+app.get('/api/credits/packages', (c) => {
+  return c.json({
+    success: true,
+    data: CREDIT_PACKAGES
+  });
+});
+
+// 创建点数购买订单
+app.post('/api/credits/purchase', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ success: false, error: 'UNAUTHORIZED', message: '请先登录' }, 401);
+  }
+
+  const token = authHeader.slice(7);
+  const payload = verifyAccessToken(token);
+
+  if (!payload) {
+    return c.json({ success: false, error: 'INVALID_TOKEN', message: '登录已过期' }, 401);
+  }
+
+  try {
+    const body = await c.req.json();
+    const { packageId } = body;
+
+    if (!packageId || !CREDIT_PACKAGES[packageId as CreditPackageId]) {
+      return c.json({ success: false, error: 'INVALID_PACKAGE', message: '无效的点数包' }, 400);
+    }
+
+    const pkg = CREDIT_PACKAGES[packageId as CreditPackageId];
+
+    // 创建 PayPal 订单
+    const paypalResponse = await fetch('https://api-m.sandbox.paypal.com/v2/checkout/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${Buffer.from(
+          `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
+        ).toString('base64')}`,
+      },
+      body: JSON.stringify({
+        intent: 'CAPTURE',
+        purchase_units: [{
+          reference_id: `credits_${payload.userId}_${Date.now()}`,
+          description: `AI Content Studio - ${pkg.name.zh} (${pkg.points} 点)`,
+          amount: {
+            currency_code: 'USD',
+            value: (pkg.price / 100).toFixed(2),
+          },
+          custom_id: payload.userId,
+        }],
+        application_context: {
+          return_url: `${process.env.FRONTEND_URL}/credits/success`,
+          cancel_url: `${process.env.FRONTEND_URL}/credits/cancel`,
+        }
+      }),
+    });
+
+    const paypalData = await paypalResponse.json();
+
+    if (paypalData.error) {
+      console.error('PayPal error:', paypalData.error);
+      return c.json({ success: false, error: 'PAYPAL_ERROR', message: '创建支付订单失败' }, 500);
+    }
+
+    // 创建购买记录
+    const purchase = createPurchase(
+      payload.userId,
+      packageId as CreditPackageId,
+      paypalData.id
+    );
+
+    // 获取批准链接
+    const approvalUrl = paypalData.links?.find((l: any) => l.rel === 'approve')?.href;
+
+    return c.json({
+      success: true,
+      data: {
+        orderId: paypalData.id,
+        purchaseId: purchase.id,
+        approvalUrl,
+        package: pkg
+      }
+    });
+
+  } catch (error) {
+    console.error('Purchase error:', error);
+    return c.json({ success: false, error: 'SERVER_ERROR', message: '创建订单失败' }, 500);
+  }
+});
+
+// 确认点数购买（支付成功后调用）
+app.post('/api/credits/purchase/:orderId/capture', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ success: false, error: 'UNAUTHORIZED' }, 401);
+  }
+
+  const token = authHeader.slice(7);
+  const payload = verifyAccessToken(token);
+
+  if (!payload) {
+    return c.json({ success: false, error: 'INVALID_TOKEN' }, 401);
+  }
+
+  const orderId = c.req.param('orderId');
+
+  try {
+    // 捕获 PayPal 支付
+    const captureResponse = await fetch(
+      `https://api-m.sandbox.paypal.com/v2/checkout/orders/${orderId}/capture`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${Buffer.from(
+            `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
+          ).toString('base64')}`,
+        },
+      }
+    );
+
+    const captureData = await captureResponse.json();
+
+    if (captureData.error || captureData.status === 'UNPROCESSABLE_ENTITY') {
+      console.error('Capture error:', captureData);
+      return c.json({ success: false, error: 'CAPTURE_FAILED', message: '支付确认失败' }, 500);
+    }
+
+    // 查找对应的购买记录
+    const purchases = getUserPurchases(payload.userId);
+    const purchase = purchases.find(p => p.paypal_order_id === orderId);
+
+    if (!purchase) {
+      return c.json({ success: false, error: 'PURCHASE_NOT_FOUND', message: '找不到购买记录' }, 404);
+    }
+
+    // 完成购买，增加点数
+    const result = completePurchase(purchase.id);
+
+    return c.json({
+      success: true,
+      data: {
+        newBalance: result.newBalance,
+        points: CREDIT_PACKAGES[purchase.package_id as CreditPackageId].points
+      }
+    });
+
+  } catch (error) {
+    console.error('Capture error:', error);
+    return c.json({ success: false, error: 'SERVER_ERROR', message: '支付确认失败' }, 500);
+  }
+});
+
+// 获取点数交易历史
+app.get('/api/credits/history', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ success: false, error: 'UNAUTHORIZED' }, 401);
+  }
+
+  const token = authHeader.slice(7);
+  const payload = verifyAccessToken(token);
+
+  if (!payload) {
+    return c.json({ success: false, error: 'INVALID_TOKEN' }, 401);
+  }
+
+  const limit = parseInt(c.req.query('limit') || '50');
+  const offset = parseInt(c.req.query('offset') || '0');
+
+  const transactions = getTransactions(payload.userId, limit, offset);
+  const summary = getTransactionSummary(payload.userId);
+
+  return c.json({
+    success: true,
+    data: {
+      transactions,
+      summary,
+      isPro: hasProAccess(payload.userId)
+    }
+  });
+});
+
+// ============================================
+// 生成历史 API
+// ============================================
+
+// 获取生成历史
+app.get('/api/generations', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ success: false, error: 'UNAUTHORIZED' }, 401);
+  }
+
+  const token = authHeader.slice(7);
+  const payload = verifyAccessToken(token);
+
+  if (!payload) {
+    return c.json({ success: false, error: 'INVALID_TOKEN' }, 401);
+  }
+
+  const limit = parseInt(c.req.query('limit') || '20');
+  const offset = parseInt(c.req.query('offset') || '0');
+
+  const generations = getUserGenerations(payload.userId, limit, offset);
+
+  return c.json({
+    success: true,
+    data: generations
+  });
+});
+
+// 获取单条生成详情
+app.get('/api/generations/:id', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ success: false, error: 'UNAUTHORIZED' }, 401);
+  }
+
+  const token = authHeader.slice(7);
+  const payload = verifyAccessToken(token);
+
+  if (!payload) {
+    return c.json({ success: false, error: 'INVALID_TOKEN' }, 401);
+  }
+
+  const genId = c.req.param('id');
+  const generation = getUserGenerations(payload.userId, 1000).find(g => g.id === genId);
+
+  if (!generation) {
+    return c.json({ success: false, error: 'NOT_FOUND', message: '找不到该记录' }, 404);
+  }
+
+  return c.json({
+    success: true,
+    data: generation
+  });
+});
+
+// 获取用户统计
+app.get('/api/stats', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ success: false, error: 'UNAUTHORIZED' }, 401);
+  }
+
+  const token = authHeader.slice(7);
+  const payload = verifyAccessToken(token);
+
+  if (!payload) {
+    return c.json({ success: false, error: 'INVALID_TOKEN' }, 401);
+  }
+
+  const isPro = hasProAccess(payload.userId);
+  const credits = getOrCreateUserCredits(payload.userId);
+  const genStats = getUserGenerationStats(payload.userId, 30);
+  const subscription = getUserSubscription(payload.userId);
+
+  return c.json({
+    success: true,
+    data: {
+      isPro,
+      subscription: subscription ? {
+        plan: subscription.plan,
+        status: subscription.status,
+        currentPeriodEnd: subscription.current_period_end
+      } : null,
+      credits: {
+        balance: credits.balance,
+        totalPurchased: credits.total_purchased,
+        totalUsed: credits.total_used
+      },
+      generations: {
+        totalThisMonth: genStats.total,
+        byTemplate: genStats.byTemplate,
+        creditsUsed: genStats.creditsUsed,
+        subscriptionSaved: genStats.subscriptionSaved
+      }
+    }
+  });
+});
+
+// 旧版使用情况 API（兼容）
 app.get('/api/usage', async (c) => {
   const authHeader = c.req.header('Authorization');
   
@@ -608,15 +1024,14 @@ app.get('/api/usage', async (c) => {
   }
 
   const isPro = hasProAccess(payload.userId);
-  const todayUsage = getTodayUsage(payload.userId);
+  const credits = getOrCreateUserCredits(payload.userId);
 
   return c.json({
     success: true,
     data: {
       isPro,
-      todayUsage,
-      dailyLimit: isPro ? null : FREE_DAILY_LIMIT,
-      remaining: isPro ? null : Math.max(0, FREE_DAILY_LIMIT - todayUsage)
+      creditsBalance: credits.balance,
+      canUse: isPro || credits.balance > 0
     }
   });
 });

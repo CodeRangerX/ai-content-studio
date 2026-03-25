@@ -906,6 +906,29 @@ app.get('/api/credits/history', async (c) => {
   });
 });
 
+// 获取购买记录（账单）
+app.get('/api/credits/purchases', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ success: false, error: 'UNAUTHORIZED' }, 401);
+  }
+
+  const token = authHeader.slice(7);
+  const payload = verifyAccessToken(token);
+
+  if (!payload) {
+    return c.json({ success: false, error: 'INVALID_TOKEN' }, 401);
+  }
+
+  const purchases = getUserPurchases(payload.userId, 100);
+
+  return c.json({
+    success: true,
+    data: purchases
+  });
+});
+
 // ============================================
 // 生成历史 API
 // ============================================

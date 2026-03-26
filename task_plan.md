@@ -8,7 +8,7 @@
 
 **部署地址：**
 - Pro 版本: https://pro.ai-content-studio-am5.pages.dev
-- 免费版本: https://master.ai-content-studio-am5.pages.dev
+- 免费版本: https://main.ai-content-studio-am5.pages.dev
 
 ---
 

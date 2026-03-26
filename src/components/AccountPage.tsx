@@ -3,15 +3,16 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { Language } from '../lib/i18n';
 import { getApiUrl } from '../lib/auth';
-import { getUserStats, type UserStats } from '../lib/credits';
 
 interface AccountPageProps {
   lang: Language;
   onBack: () => void;
   onBuyCredits: () => void;
+  creditBalance?: number | null;
+  onBalanceUpdate?: () => void;
 }
 
-// 购买记录（账单）
+// 购买记录
 interface Purchase {
   id: string;
   package_id: string;
@@ -20,16 +21,6 @@ interface Purchase {
   status: 'pending' | 'completed' | 'failed';
   created_at: string;
   completed_at: string | null;
-}
-
-// 订阅记录（账单）
-interface SubscriptionRecord {
-  id: string;
-  plan: string;
-  status: string;
-  current_period_start: string;
-  current_period_end: string;
-  created_at: string;
 }
 
 // 生成记录（使用明细）
@@ -50,19 +41,15 @@ interface Generation {
 
 const labels = {
   zh: {
-    title: '我的账户', back: '返回', subscription: '订阅状态', credits: '点数余额',
-    proPlan: 'Pro 套餐', freePlan: '免费版', active: '活跃', expired: '已过期',
-    expiresAt: '到期时间', buyCredits: '购买点数', thisMonthStats: '本月统计',
-    generations: '生成次数', creditsUsed: '消耗点数', subscriptionSaved: '节省',
-    
-    // Tab
-    usageRecords: '使用记录',
-    bills: '账单',
+    title: '我的账户',
+    back: '返回',
+    credits: '点数余额',
+    buyCredits: '购买点数',
     
     // 使用记录
-    usageTitle: '使用记录',
-    costPoints: '消耗点数',
-    genTime: '生成时间',
+    usageRecords: '使用记录',
+    costPoints: '消耗',
+    genTime: '时间',
     genStatus: '状态',
     success: '成功',
     failed: '失败',
@@ -73,39 +60,32 @@ const labels = {
     copied: '已复制',
     detail: '详情',
     close: '关闭',
-    noData: '暂无数据',
+    noData: '暂无记录',
     loading: '加载中...',
     
-    // 筛选
-    filter: '筛选', dateRange: '时间范围', status: '状态', allStatus: '全部状态',
-    resetFilter: '重置', prevPage: '上一页', nextPage: '下一页', page: '第', of: '共',
-    today: '今天', last7days: '最近7天', last30days: '最近30天', allTime: '全部时间',
-    
     // 账单
-    billsTitle: '账单',
-    billType: '类型',
+    bills: '账单',
     billAmount: '金额',
     billTime: '时间',
     billStatus: '状态',
     billPending: '处理中',
     billCompleted: '已完成',
     billFailed: '失败',
-    pointsPurchase: '点数购买',
-    subscriptionPurchase: '订阅',
+    pointsPurchase: '购买点数',
     points: '点',
-    unlimited: '无限',
+    
+    // Tabs
+    tabUsage: '使用记录',
+    tabBills: '账单',
   },
   en: {
-    title: 'My Account', back: 'Back', subscription: 'Subscription', credits: 'Credits',
-    proPlan: 'Pro Plan', freePlan: 'Free', active: 'Active', expired: 'Expired',
-    expiresAt: 'Expires', buyCredits: 'Buy Credits', thisMonthStats: 'This Month',
-    generations: 'Generations', creditsUsed: 'Credits Used', subscriptionSaved: 'Saved',
+    title: 'My Account',
+    back: 'Back',
+    credits: 'Credits',
+    buyCredits: 'Buy Credits',
     
     usageRecords: 'Usage Records',
-    bills: 'Bills',
-    
-    usageTitle: 'Usage Records',
-    costPoints: 'Credits Used',
+    costPoints: 'Used',
     genTime: 'Time',
     genStatus: 'Status',
     success: 'Success',
@@ -117,15 +97,10 @@ const labels = {
     copied: 'Copied',
     detail: 'Detail',
     close: 'Close',
-    noData: 'No data',
+    noData: 'No records',
     loading: 'Loading...',
     
-    filter: 'Filter', dateRange: 'Date Range', status: 'Status', allStatus: 'All Status',
-    resetFilter: 'Reset', prevPage: 'Previous', nextPage: 'Next', page: 'Page', of: 'of',
-    today: 'Today', last7days: 'Last 7 days', last30days: 'Last 30 days', allTime: 'All time',
-    
-    billsTitle: 'Bills',
-    billType: 'Type',
+    bills: 'Bills',
     billAmount: 'Amount',
     billTime: 'Time',
     billStatus: 'Status',
@@ -133,140 +108,95 @@ const labels = {
     billCompleted: 'Completed',
     billFailed: 'Failed',
     pointsPurchase: 'Points Purchase',
-    subscriptionPurchase: 'Subscription',
     points: 'pts',
-    unlimited: 'Unlimited',
+    
+    tabUsage: 'Usage',
+    tabBills: 'Bills',
   },
 };
 
-export function AccountPage({ lang, onBack, onBuyCredits }: AccountPageProps) {
-  const [stats, setStats] = useState<UserStats | null>(null);
-  const [loading, setLoading] = useState(true);
+export function AccountPage({ lang, onBack, onBuyCredits, creditBalance, onBalanceUpdate }: AccountPageProps) {
   const [activeTab, setActiveTab] = useState<'usage' | 'bills'>('usage');
   
   const t = labels[lang] || labels.zh;
 
-  useEffect(() => { loadStats(); }, []);
-
-  const loadStats = async () => {
-    setLoading(true);
-    try {
-      const res = await getUserStats();
-      if (res.success && res.data) setStats(res.data);
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  };
-
-  const formatDate = (dateStr: string) => {
-    try {
-      return new Date(dateStr).toLocaleString(lang === 'zh' ? 'zh-CN' : 'en-US', {
-        year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit'
-      });
-    } catch { return dateStr; }
-  };
-
-  if (loading) {
-    return (
-      <div className="account-page-loading">
-        <div className="loading-spinner" />
-        <p>{t.loading}</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="account-page">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="account-page-v2"
+    >
       {/* Header */}
-      <div className="account-header">
-        <button onClick={onBack} className="account-back-btn">← {t.back}</button>
+      <div className="account-header-v2">
+        <button onClick={onBack} className="back-btn-v2">← {t.back}</button>
         <h1>{t.title}</h1>
       </div>
 
-      {/* Overview Cards */}
-      <div className="account-cards">
-        <div className="account-card sub">
-          <div className="card-label">{t.subscription}</div>
-          <div className="card-value">{stats?.isPro ? t.proPlan : t.freePlan}</div>
-          {stats?.subscription && (
-            <div className="card-detail">
-              <span className={stats.subscription.status === 'active' ? 'status-active' : 'status-expired'}>
-                {stats.subscription.status === 'active' ? t.active : t.expired}
-              </span>
-              {stats.subscription.currentPeriodEnd && (
-                <span>{t.expiresAt}: {formatDate(stats.subscription.currentPeriodEnd)}</span>
-              )}
-            </div>
-          )}
+      {/* 点数卡片 - 醒目展示 */}
+      <div className="credits-card-main">
+        <div className="credits-info">
+          <span className="credits-label">{t.credits}</span>
+          <span className="credits-value">{creditBalance ?? 0}</span>
         </div>
-
-        <div className="account-card credits">
-          <div className="card-label">{t.credits}</div>
-          <div className="card-value">
-            {stats?.isPro ? `∞ ${t.unlimited}` : `${stats?.credits?.balance || 0} ${t.points}`}
-          </div>
-          {!stats?.isPro && (
-            <button onClick={onBuyCredits} className="buy-credits-btn">{t.buyCredits}</button>
-          )}
-        </div>
+        <button onClick={onBuyCredits} className="buy-credits-main-btn">
+          <span>💎</span>
+          <span>{t.buyCredits}</span>
+        </button>
       </div>
 
-      {/* Monthly Stats */}
-      {stats && (
-        <div className="monthly-stats">
-          <h3>{t.thisMonthStats}</h3>
-          <div className="stats-row">
-            <div className="stat"><span className="v">{stats.generations?.totalThisMonth || 0}</span><span className="l">{t.generations}</span></div>
-            <div className="stat"><span className="v">{stats.generations?.creditsUsed || 0}</span><span className="l">{t.creditsUsed}</span></div>
-            {stats.isPro && <div className="stat highlight"><span className="v">{stats.generations?.subscriptionSaved || 0}</span><span className="l">{t.subscriptionSaved}</span></div>}
-          </div>
-        </div>
-      )}
-
       {/* Tabs */}
-      <div className="account-tabs">
-        <button className={activeTab === 'usage' ? 'active' : ''} onClick={() => setActiveTab('usage')}>
-          {t.usageRecords}
+      <div className="account-tabs-v2">
+        <button 
+          className={activeTab === 'usage' ? 'active' : ''} 
+          onClick={() => setActiveTab('usage')}
+        >
+          {t.tabUsage}
         </button>
-        <button className={activeTab === 'bills' ? 'active' : ''} onClick={() => setActiveTab('bills')}>
-          {t.bills}
+        <button 
+          className={activeTab === 'bills' ? 'active' : ''} 
+          onClick={() => setActiveTab('bills')}
+        >
+          {t.tabBills}
         </button>
       </div>
 
       {/* Content */}
       {activeTab === 'usage' && <UsageRecordsList lang={lang} />}
-      {activeTab === 'bills' && <BillsList lang={lang} />}
-    </div>
+      {activeTab === 'bills' && <BillsList lang={lang} onBuyCredits={onBuyCredits} />}
+    </motion.div>
   );
 }
 
 // ============================================
-// 使用记录列表（消耗明细）
+// 使用记录列表
 // ============================================
 function UsageRecordsList({ lang }: { lang: Language }) {
   const t = labels[lang] || labels.zh;
   const [records, setRecords] = useState<Generation[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [dateFilter, setDateFilter] = useState('allTime');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [hasMore, setHasMore] = useState(true);
   const [selected, setSelected] = useState<Generation | null>(null);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => { loadRecords(); }, [page]);
+  useEffect(() => { loadRecords(); }, []);
 
-  const loadRecords = async () => {
+  const loadRecords = async (pageNum = 1) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-      const res = await fetch(getApiUrl(`/api/generations?limit=20&offset=${(page-1)*20}`), {
+      const res = await fetch(getApiUrl(`/api/generations?limit=20&offset=${(pageNum-1)*20}`), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
       if (data.success) {
-        setRecords(data.data || []);
-        setTotalPages(Math.ceil((data.data?.length || 0) / 20) + 1);
+        const newRecords = data.data || [];
+        if (pageNum === 1) {
+          setRecords(newRecords);
+        } else {
+          setRecords(prev => [...prev, ...newRecords]);
+        }
+        setHasMore(newRecords.length === 20);
       }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -278,164 +208,107 @@ function UsageRecordsList({ lang }: { lang: Language }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    
+    if (diff < 60000) return lang === 'zh' ? '刚刚' : 'Just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}${lang === 'zh' ? '分钟前' : 'm ago'}`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}${lang === 'zh' ? '小时前' : 'h ago'}`;
+    return date.toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', { month: 'short', day: 'numeric' });
+  };
+
   const formatDuration = (ms?: number) => {
     if (!ms) return '-';
     if (ms < 1000) return `${ms}ms`;
     return `${(ms/1000).toFixed(1)}s`;
   };
 
-  // 客户端筛选
-  let filtered = records;
-  if (statusFilter !== 'all') {
-    filtered = filtered.filter(r => r.status === statusFilter);
-  }
-  if (dateFilter !== 'allTime') {
-    const now = new Date();
-    let start: Date;
-    switch (dateFilter) {
-      case 'today': start = new Date(now.setHours(0,0,0,0)); break;
-      case 'last7days': start = new Date(now.setDate(now.getDate()-7)); break;
-      case 'last30days': start = new Date(now.setDate(now.getDate()-30)); break;
-      default: start = new Date(0);
-    }
-    if (dateFilter !== 'allTime') {
-      filtered = filtered.filter(r => new Date(r.created_at) >= start);
-    }
-  }
-
   return (
-    <div className="usage-container">
-      {/* Filters */}
-      <div className="usage-filters">
-        <select value={dateFilter} onChange={e => setDateFilter(e.target.value)}>
-          <option value="allTime">{t.allTime}</option>
-          <option value="today">{t.today}</option>
-          <option value="last7days">{t.last7days}</option>
-          <option value="last30days">{t.last30days}</option>
-        </select>
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-          <option value="all">{t.allStatus}</option>
-          <option value="success">{t.success}</option>
-          <option value="failed">{t.failed}</option>
-        </select>
-        <button onClick={() => { setDateFilter('allTime'); setStatusFilter('all'); }}>{t.resetFilter}</button>
-      </div>
-
-      {/* Table */}
-      <div className="usage-table">
-        <div className="usage-header-row">
-          <span className="col-time">{t.genTime}</span>
-          <span className="col-template">{t.template}</span>
-          <span className="col-cost">{t.costPoints}</span>
-          <span className="col-status">{t.genStatus}</span>
-          <span className="col-action"></span>
+    <div className="usage-list">
+      {loading && records.length === 0 ? (
+        <div className="list-loading">{t.loading}</div>
+      ) : records.length === 0 ? (
+        <div className="list-empty">
+          <span className="empty-icon">📝</span>
+          <span>{t.noData}</span>
         </div>
-        
-        {loading ? (
-          <div className="usage-loading">{t.loading}</div>
-        ) : filtered.length === 0 ? (
-          <div className="usage-empty">{t.noData}</div>
-        ) : (
-          filtered.map(r => (
-            <div key={r.id} className={`usage-row ${r.status}`}>
-              <span className="col-time">{new Date(r.created_at).toLocaleString()}</span>
-              <span className="col-template">{r.template_name}</span>
-              <span className="col-cost">
-                {r.cost_type === 'subscription' ? (
-                  <span className="cost-sub">订阅</span>
-                ) : (
-                  <span className="cost-pts">{r.credits_used} {t.points}</span>
-                )}
-              </span>
-              <span className="col-status">
-                <span className={r.status === 'success' ? 'badge-success' : 'badge-failed'}>
-                  {r.status === 'success' ? t.success : t.failed}
+      ) : (
+        <>
+          {records.map(r => (
+            <div key={r.id} className={`usage-item ${r.status}`} onClick={() => setSelected(r)}>
+              <div className="usage-item-main">
+                <span className="usage-template">{r.template_name}</span>
+                <span className={`usage-status ${r.status}`}>
+                  {r.status === 'success' ? '✓' : '✕'}
                 </span>
-              </span>
-              <span className="col-action">
-                <button onClick={() => setSelected(r)}>{t.detail}</button>
-              </span>
+              </div>
+              <div className="usage-item-meta">
+                <span className="usage-time">{formatTime(r.created_at)}</span>
+                <span className="usage-cost">
+                  {r.cost_type === 'subscription' 
+                    ? (lang === 'zh' ? '订阅' : 'Sub') 
+                    : `-${r.credits_used} ${t.points}`}
+                </span>
+              </div>
             </div>
-          ))
-        )}
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="pagination">
-          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}>{t.prevPage}</button>
-          <span>{t.page} {page} {t.of} {totalPages}</span>
-          <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>{t.nextPage}</button>
-        </div>
+          ))}
+          
+          {hasMore && (
+            <button 
+              className="load-more-btn" 
+              onClick={() => { setPage(p => p + 1); loadRecords(page + 1); }}
+              disabled={loading}
+            >
+              {loading ? t.loading : (lang === 'zh' ? '加载更多' : 'Load More')}
+            </button>
+          )}
+        </>
       )}
 
       {/* Detail Modal */}
       {selected && (
         <div className="modal-overlay" onClick={() => setSelected(null)}>
-          <div className="modal large" onClick={e => e.stopPropagation()}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{t.usageTitle}</h3>
-              <button onClick={() => setSelected(null)}>×</button>
+              <h3>{selected.template_name}</h3>
+              <button className="modal-close" onClick={() => setSelected(null)}>×</button>
             </div>
+            
             <div className="modal-body">
-              <div className="detail-grid">
-                <div className="detail-item">
-                  <label>{t.genTime}</label>
-                  <span>{new Date(selected.created_at).toLocaleString()}</span>
-                </div>
-                <div className="detail-item">
-                  <label>{t.template}</label>
-                  <span>{selected.template_name}</span>
-                </div>
-                <div className="detail-item">
-                  <label>{t.costPoints}</label>
-                  <span>{selected.cost_type === 'subscription' ? '订阅用户' : `${selected.credits_used} ${t.points}`}</span>
-                </div>
-                <div className="detail-item">
-                  <label>{t.genStatus}</label>
-                  <span className={selected.status === 'success' ? 'badge-success' : 'badge-failed'}>
-                    {selected.status === 'success' ? t.success : t.failed}
-                  </span>
-                </div>
-                {selected.generation_time_ms && (
-                  <div className="detail-item">
-                    <label>耗时</label>
-                    <span>{formatDuration(selected.generation_time_ms)}</span>
-                  </div>
-                )}
-                {selected.tokens_input && selected.tokens_output && (
-                  <div className="detail-item">
-                    <label>Tokens</label>
-                    <span>输入 {selected.tokens_input} / 输出 {selected.tokens_output}</span>
-                  </div>
-                )}
+              <div className="detail-row">
+                <span className="detail-label">{t.genTime}</span>
+                <span>{new Date(selected.created_at).toLocaleString()}</span>
               </div>
-
-              {/* Input */}
-              <div className="detail-section">
-                <label>{t.input}</label>
-                <div className="input-box">
-                  {(() => {
-                    try {
-                      const data = JSON.parse(selected.input_data);
-                      return Object.entries(data).map(([k, v]) => (
-                        <div key={k} className="input-item"><span className="k">{k}:</span> <span className="v">{String(v)}</span></div>
-                      ));
-                    } catch { return selected.input_data; }
-                  })()}
-                </div>
+              <div className="detail-row">
+                <span className="detail-label">{t.costPoints}</span>
+                <span>{selected.cost_type === 'subscription' 
+                  ? (lang === 'zh' ? '订阅用户' : 'Subscription') 
+                  : `${selected.credits_used} ${t.points}`}</span>
               </div>
+              {selected.generation_time_ms && (
+                <div className="detail-row">
+                  <span className="detail-label">{lang === 'zh' ? '耗时' : 'Duration'}</span>
+                  <span>{formatDuration(selected.generation_time_ms)}</span>
+                </div>
+              )}
+              {selected.tokens_input && selected.tokens_output && (
+                <div className="detail-row">
+                  <span className="detail-label">Tokens</span>
+                  <span>{selected.tokens_input} → {selected.tokens_output}</span>
+                </div>
+              )}
 
-              {/* Output */}
               {selected.output_content && (
-                <div className="detail-section">
-                  <div className="section-header">
-                    <label>{t.output}</label>
+                <div className="output-section">
+                  <div className="output-header">
+                    <span>{t.output}</span>
                     <button onClick={() => handleCopy(selected.output_content || '')}>
                       {copied ? t.copied : t.copy}
                     </button>
                   </div>
-                  <pre className="output-box">{selected.output_content}</pre>
+                  <pre className="output-text">{selected.output_content}</pre>
                 </div>
               )}
             </div>
@@ -447,12 +320,11 @@ function UsageRecordsList({ lang }: { lang: Language }) {
 }
 
 // ============================================
-// 账单列表（订阅+购买记录）
+// 账单列表
 // ============================================
-function BillsList({ lang }: { lang: Language }) {
+function BillsList({ lang, onBuyCredits }: { lang: Language; onBuyCredits: () => void }) {
   const t = labels[lang] || labels.zh;
   const [purchases, setPurchases] = useState<Purchase[]>([]);
-  const [subscription, setSubscription] = useState<SubscriptionRecord | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { loadBills(); }, []);
@@ -461,90 +333,70 @@ function BillsList({ lang }: { lang: Language }) {
     setLoading(true);
     try {
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-      
-      // 获取购买记录
-      const purchaseRes = await fetch(getApiUrl('/api/credits/purchases'), {
+      const res = await fetch(getApiUrl('/api/credits/purchases'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      const purchaseData = await purchaseRes.json();
-      if (purchaseData.success) setPurchases(purchaseData.data || []);
-
-      // 获取订阅状态
-      const subRes = await fetch(getApiUrl('/api/subscription/status'), {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const subData = await subRes.json();
-      if (subData.success && subData.data?.subscription) {
-        setSubscription(subData.data.subscription);
-      }
+      const data = await res.json();
+      if (data.success) setPurchases(data.data || []);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
 
   const formatPrice = (cents: number) => `$${(cents/100).toFixed(2)}`;
 
+  const getStatusClass = (status: string) => {
+    switch (status) {
+      case 'completed': return 'status-success';
+      case 'pending': return 'status-pending';
+      default: return 'status-failed';
+    }
+  };
+
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'completed': return t.billCompleted;
       case 'pending': return t.billPending;
-      case 'failed': return t.billFailed;
-      default: return status;
+      default: return t.billFailed;
     }
   };
 
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', {
+      year: 'numeric', month: 'short', day: 'numeric'
+    });
+  };
+
   return (
-    <div className="bills-container">
+    <div className="bills-list">
       {loading ? (
-        <div className="bills-loading">{t.loading}</div>
+        <div className="list-loading">{t.loading}</div>
+      ) : purchases.length === 0 ? (
+        <div className="list-empty">
+          <span className="empty-icon">💳</span>
+          <span>{t.noData}</span>
+          <button className="empty-action-btn" onClick={onBuyCredits}>{t.buyCredits}</button>
+        </div>
       ) : (
         <>
-          {/* 订阅记录 */}
-          {subscription && (
-            <div className="bills-section">
-              <h3>{t.subscriptionPurchase}</h3>
-              <div className="bills-table">
-                <div className="bills-header-row">
-                  <span>{t.billType}</span>
-                  <span>{t.billAmount}</span>
-                  <span>{t.billTime}</span>
-                  <span>{t.billStatus}</span>
-                </div>
-                <div className="bills-row">
-                  <span>{subscription.plan === 'pro_monthly' ? 'Pro 月付' : subscription.plan === 'pro_yearly' ? 'Pro 年付' : subscription.plan}</span>
-                  <span>{subscription.plan === 'pro_monthly' ? '$9.00' : subscription.plan === 'pro_yearly' ? '$79.00' : '-'}</span>
-                  <span>{new Date(subscription.created_at).toLocaleDateString()}</span>
-                  <span className={subscription.status === 'active' ? 'badge-success' : 'badge-failed'}>{subscription.status === 'active' ? t.active : t.expired}</span>
-                </div>
+          {purchases.map(p => (
+            <div key={p.id} className="bill-item">
+              <div className="bill-main">
+                <span className="bill-title">💎 {p.points} {t.points}</span>
+                <span className="bill-amount">{formatPrice(p.price)}</span>
+              </div>
+              <div className="bill-meta">
+                <span className="bill-date">{formatDate(p.created_at)}</span>
+                <span className={`bill-status ${getStatusClass(p.status)}`}>
+                  {getStatusLabel(p.status)}
+                </span>
               </div>
             </div>
-          )}
-
-          {/* 点数购买记录 */}
-          <div className="bills-section">
-            <h3>{t.pointsPurchase}</h3>
-            <div className="bills-table">
-              <div className="bills-header-row">
-                <span>{t.billType}</span>
-                <span>{t.points}</span>
-                <span>{t.billAmount}</span>
-                <span>{t.billTime}</span>
-                <span>{t.billStatus}</span>
-              </div>
-              {purchases.length === 0 ? (
-                <div className="bills-empty">{t.noData}</div>
-              ) : (
-                purchases.map(p => (
-                  <div key={p.id} className="bills-row">
-                    <span>{p.package_id}</span>
-                    <span>{p.points} {t.points}</span>
-                    <span>{formatPrice(p.price)}</span>
-                    <span>{new Date(p.created_at).toLocaleDateString()}</span>
-                    <span className={`badge-${p.status}`}>{getStatusLabel(p.status)}</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          ))}
+          
+          <button className="buy-more-btn" onClick={onBuyCredits}>
+            <span>💎</span>
+            <span>{t.buyCredits}</span>
+          </button>
         </>
       )}
     </div>

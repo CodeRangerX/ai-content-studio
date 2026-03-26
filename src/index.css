@@ -2459,3 +2459,565 @@ body {
 .pagination button { padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
 .pagination button:disabled { background: #cbd5e1; cursor: not-allowed; }
 .pagination span { font-size: 14px; color: #666; }
+
+/* 账单区块头部 */
+.bills-section-header { display: -webkit-box; display: -webkit-flex; display: flex; -webkit-box-pack: justify; -webkit-justify-content: space-between; justify-content: space-between; -webkit-box-align: center; -webkit-align-items: center; align-items: center; margin-bottom: 16px; }
+.bills-section-header h3 { margin-bottom: 0; }
+.buy-btn { background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; }
+.buy-btn:hover { background: #5a67d8; }
+
+/* Header 点数区域 */
+.credits-section { display: -webkit-box; display: -webkit-flex; display: flex; -webkit-box-align: center; -webkit-align-items: center; align-items: center; gap: 8px; }
+.buy-credits-header-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; -webkit-transition: all 0.2s; transition: all 0.2s; }
+.buy-credits-header-btn:hover { -webkit-transform: translateY(-1px); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+
+/* ============================================
+   新版账户页面样式 V2 - 简洁大方
+   ============================================ */
+
+.account-page-v2 {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 100px 20px 40px;
+}
+
+.account-header-v2 {
+  margin-bottom: 32px;
+}
+
+.account-header-v2 h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #f5f3ef;
+  margin-top: 8px;
+}
+
+.back-btn-v2 {
+  background: none;
+  border: none;
+  color: rgba(196, 160, 82, 0.8);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 8px;
+  display: -webkit-inline-box;
+  display: -webkit-inline-flex;
+  display: inline-flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  gap: 4px;
+  -webkit-transition: color 0.2s;
+  transition: color 0.2s;
+}
+
+.back-btn-v2:hover {
+  color: #c4a052;
+}
+
+/* 点数卡片 - 主卡片 */
+.credits-card-main {
+  background: linear-gradient(135deg, #1a1a1f 0%, #252530 100%);
+  border: 1px solid rgba(196, 160, 82, 0.2);
+  border-radius: 20px;
+  padding: 28px;
+  margin-bottom: 32px;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  gap: 20px;
+}
+
+.credits-info {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.credits-label {
+  font-size: 14px;
+  color: rgba(245, 243, 239, 0.6);
+}
+
+.credits-value {
+  font-size: 48px;
+  font-weight: 700;
+  color: #c4a052;
+  line-height: 1;
+}
+
+.buy-credits-main-btn {
+  background: linear-gradient(135deg, #c4a052 0%, #a08040 100%);
+  border: none;
+  color: #0d0d0f;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  gap: 8px;
+  -webkit-transition: all 0.2s;
+  transition: all 0.2s;
+}
+
+.buy-credits-main-btn:hover {
+  -webkit-transform: translateY(-2px);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(196, 160, 82, 0.3);
+}
+
+/* Tabs V2 */
+.account-tabs-v2 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.account-tabs-v2 button {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1;
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: rgba(245, 243, 239, 0.6);
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-transition: all 0.2s;
+  transition: all 0.2s;
+}
+
+.account-tabs-v2 button.active {
+  background: rgba(196, 160, 82, 0.15);
+  color: #c4a052;
+}
+
+.account-tabs-v2 button:hover:not(.active) {
+  color: rgba(245, 243, 239, 0.9);
+}
+
+/* 使用记录列表 */
+.usage-list {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.list-loading, .list-empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: rgba(245, 243, 239, 0.5);
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.empty-icon {
+  font-size: 32px;
+  opacity: 0.5;
+}
+
+.empty-action-btn {
+  margin-top: 16px;
+  background: linear-gradient(135deg, #c4a052 0%, #a08040 100%);
+  border: none;
+  color: #0d0d0f;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.usage-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  -webkit-transition: all 0.2s;
+  transition: all 0.2s;
+}
+
+.usage-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(196, 160, 82, 0.2);
+}
+
+.usage-item.success { border-left: 3px solid #22c55e; }
+.usage-item.failed { border-left: 3px solid #ef4444; }
+
+.usage-item-main {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.usage-template {
+  font-size: 15px;
+  font-weight: 500;
+  color: #f5f3ef;
+}
+
+.usage-status {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
+.usage-status.success {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.usage-status.failed {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.usage-item-meta {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  font-size: 13px;
+  color: rgba(245, 243, 239, 0.5);
+}
+
+.usage-cost {
+  color: #c4a052;
+  font-weight: 500;
+}
+
+.load-more-btn {
+  background: rgba(196, 160, 82, 0.1);
+  border: 1px solid rgba(196, 160, 82, 0.2);
+  color: #c4a052;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-transition: all 0.2s;
+  transition: all 0.2s;
+}
+
+.load-more-btn:hover {
+  background: rgba(196, 160, 82, 0.15);
+}
+
+.load-more-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 账单列表 */
+.bills-list {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bill-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.bill-main {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.bill-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: #f5f3ef;
+}
+
+.bill-amount {
+  font-size: 17px;
+  font-weight: 600;
+  color: #c4a052;
+}
+
+.bill-meta {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  font-size: 13px;
+}
+
+.bill-date {
+  color: rgba(245, 243, 239, 0.5);
+}
+
+.bill-status {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.bill-status.status-success {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.bill-status.status-pending {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+}
+
+.bill-status.status-failed {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.buy-more-btn {
+  background: linear-gradient(135deg, #c4a052 0%, #a08040 100%);
+  border: none;
+  color: #0d0d0f;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  -webkit-transition: all 0.2s;
+  transition: all 0.2s;
+}
+
+.buy-more-btn:hover {
+  -webkit-transform: translateY(-2px);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(196, 160, 82, 0.3);
+}
+
+/* Modal V2 */
+.modal-content {
+  background: #1a1a1f;
+  border: 1px solid rgba(196, 160, 82, 0.2);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 80vh;
+  overflow: auto;
+}
+
+.modal-header {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.modal-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #f5f3ef;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: rgba(245, 243, 239, 0.5);
+  font-size: 28px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  border-radius: 8px;
+  -webkit-transition: all 0.2s;
+  transition: all 0.2s;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f5f3ef;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.detail-row {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  color: rgba(245, 243, 239, 0.5);
+  font-size: 14px;
+}
+
+.detail-row span:last-child {
+  color: #f5f3ef;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.output-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.output-header {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.output-header span {
+  color: rgba(245, 243, 239, 0.5);
+  font-size: 14px;
+}
+
+.output-header button {
+  background: rgba(196, 160, 82, 0.15);
+  border: none;
+  color: #c4a052;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-transition: all 0.2s;
+  transition: all 0.2s;
+}
+
+.output-header button:hover {
+  background: rgba(196, 160, 82, 0.25);
+}
+
+.output-text {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(245, 243, 239, 0.9);
+  white-space: pre-wrap;
+  max-height: 300px;
+  overflow: auto;
+}

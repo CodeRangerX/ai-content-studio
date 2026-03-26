@@ -4,7 +4,6 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginPage } from './components/LoginPage';
 import { UserMenu } from './components/UserMenu';
-import { PricingPage } from './components/PricingPage';
 import { AccountPage } from './components/AccountPage';
 import { CreditsPage } from './components/CreditsPage';
 import { 
@@ -22,7 +21,7 @@ import { Language, languageNames, translations } from './lib/i18n';
 import { authConfig, getApiUrl, TokenManager } from './lib/auth';
 
 // Page types
-type PageType = 'home' | 'workspace' | 'pricing' | 'account' | 'credits';
+type PageType = 'home' | 'workspace' | 'account' | 'credits';
 
 // ============================================
 // Header
@@ -33,8 +32,8 @@ function Header({
   onBack, 
   page,
   onLogin,
-  onPricing,
   onAccount,
+  onCredits,
   creditBalance
 }: { 
   lang: Language; 
@@ -42,8 +41,8 @@ function Header({
   onBack?: () => void;
   page: PageType;
   onLogin?: () => void;
-  onPricing?: () => void;
   onAccount?: () => void;
+  onCredits?: () => void;
   creditBalance?: number | null;
 }) {
   const { user, isAuthenticated, logout } = useAuth();
@@ -80,22 +79,21 @@ function Header({
             ))}
           </select>
           
-          {/* 点数余额显示 */}
-          {isAuthenticated && creditBalance !== null && (
-            <button onClick={onAccount} className="credit-balance-btn">
-              <span className="credit-icon">💎</span>
-              <span>{creditBalance}</span>
-            </button>
-          )}
-          
-          {page === 'home' && (
-            <button onClick={onPricing} className="pricing-link-btn">
-              {lang === 'zh' ? '订阅' : 'Pricing'}
-            </button>
+          {/* 点数余额 + 购买按钮（登录用户可见） */}
+          {isAuthenticated && (
+            <div className="credits-section">
+              <button onClick={onAccount} className="credit-balance-btn">
+                <span className="credit-icon">💎</span>
+                <span>{creditBalance ?? 0}</span>
+              </button>
+              <button onClick={onCredits} className="buy-credits-header-btn">
+                {lang === 'zh' ? '购买点数' : 'Buy Credits'}
+              </button>
+            </div>
           )}
           
           {isAuthenticated ? (
-            <UserMenu onLogout={logout} onPricing={onPricing} onAccount={onAccount} />
+            <UserMenu onLogout={logout} onAccount={onAccount} onBuyCredits={onCredits} />
           ) : (
             <button onClick={onLogin} className="login-btn">
               {t.login}
@@ -460,8 +458,6 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
   const [lang, setLang] = useState<Language>('en');
   const [page, setPage] = useState<PageType>('home');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
-  const [subscriptionMessage, setSubscriptionMessage] = useState<string | null>(null);
-  const [pricingKey, setPricingKey] = useState(0); // 用于强制刷新 PricingPage
   const [creditBalance, setCreditBalance] = useState<number | null>(null);
 
   // 获取点数余额
@@ -493,52 +489,6 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
     }
   };
 
-  // 检测 URL 参数显示订阅消息
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const subscription = params.get('subscription');
-    if (subscription === 'success') {
-      // 验证并激活订阅
-      const verifySubscription = async () => {
-        try {
-          const token = TokenManager.getAccessToken();
-          if (!token) return;
-          
-          const response = await fetch(getApiUrl('/api/subscription/verify'), {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          
-          const data = await response.json();
-          if (data.success) {
-            setSubscriptionMessage(lang === 'zh' ? '🎉 订阅成功！感谢您的支持！' : '🎉 Subscription successful! Thank you for your support!');
-          } else {
-            setSubscriptionMessage(lang === 'zh' ? '⏳ 订阅处理中...' : '⏳ Subscription processing...');
-          }
-        } catch (err) {
-          console.error('Verify subscription error:', err);
-          setSubscriptionMessage(lang === 'zh' ? '🎉 订阅成功！' : '🎉 Subscription successful!');
-        }
-        
-        // 刷新订阅状态
-        setPricingKey(prev => prev + 1);
-        // 清除 URL 参数
-        window.history.replaceState({}, '', window.location.pathname);
-        // 5秒后自动关闭消息
-        setTimeout(() => setSubscriptionMessage(null), 5000);
-      };
-      
-      verifySubscription();
-    } else if (subscription === 'cancel') {
-      setSubscriptionMessage(lang === 'zh' ? '订阅已取消' : 'Subscription cancelled');
-      window.history.replaceState({}, '', window.location.pathname);
-      setTimeout(() => setSubscriptionMessage(null), 3000);
-    }
-  }, [lang]);
-
   const handleSelectTemplate = (template: Template) => {
     setSelectedTemplate(template);
     setPage('workspace');
@@ -547,10 +497,6 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
   const handleBack = () => {
     setPage('home');
     setSelectedTemplate(null);
-  };
-
-  const handlePricing = () => {
-    setPage('pricing');
   };
 
   const handleAccount = () => {
@@ -575,41 +521,15 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
         onBack={handleBack}
         page={page}
         onLogin={onLogin}
-        onPricing={handlePricing}
         onAccount={handleAccount}
+        onCredits={handleCredits}
         creditBalance={creditBalance}
       />
-      
-      {/* 订阅成功/取消消息 */}
-      <AnimatePresence>
-        {subscriptionMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            className="subscription-toast"
-          >
-            {subscriptionMessage}
-          </motion.div>
-        )}
-      </AnimatePresence>
       
       <main className="main">
         <div className="main-inner">
           <AnimatePresence mode="wait">
-            {page === 'pricing' ? (
-              <motion.div
-                key={`pricing-${pricingKey}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <PricingPage 
-                  lang={lang} 
-                  onBack={handleBack}
-                />
-              </motion.div>
-            ) : page === 'account' ? (
+            {page === 'account' ? (
               <motion.div
                 key="account"
                 initial={{ opacity: 0 }}
@@ -620,6 +540,8 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
                   lang={lang} 
                   onBack={handleBack}
                   onBuyCredits={handleCredits}
+                  creditBalance={creditBalance}
+                  onBalanceUpdate={fetchCreditBalance}
                 />
               </motion.div>
             ) : page === 'credits' ? (

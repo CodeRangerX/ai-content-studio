@@ -541,33 +541,11 @@ const API_CONFIG = {
   model: process.env.DEEPSEEK_MODEL || 'kimi-k2.5'
 };
 
-// 生成内容 API（支持订阅和点数）
+// 生成内容 API（免费版本，无需登录）
 app.post('/api/generate', async (c) => {
-  // 验证用户登录
-  const authHeader = c.req.header('Authorization');
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return c.json({ 
-      success: false, 
-      error: 'UNAUTHORIZED', 
-      message: '请先登录' 
-    }, 401);
-  }
-
-  const token = authHeader.slice(7);
-  const payload = verifyAccessToken(token);
-
-  if (!payload) {
-    return c.json({ 
-      success: false, 
-      error: 'INVALID_TOKEN', 
-      message: '登录已过期，请重新登录' 
-    }, 401);
-  }
-
   try {
     const body = await c.req.json();
-    const { prompt, templateId, templateName, inputData } = body;
+    const { prompt } = body;
 
     if (!prompt) {
       return c.json({ 
@@ -576,39 +554,6 @@ app.post('/api/generate', async (c) => {
         message: '请输入内容' 
       }, 400);
     }
-
-    // 检查用户权限
-    const isPro = hasProAccess(payload.userId);
-    const userCredits = getOrCreateUserCredits(payload.userId);
-    
-    // 判断是否有权限生成
-    let costType: 'subscription' | 'credits' = 'subscription';
-    let creditsUsed = 0;
-
-    if (!isPro) {
-      // 非订阅用户需要检查点数
-      if (userCredits.balance < 1) {
-        return c.json({ 
-          success: false, 
-          error: 'NO_CREDITS', 
-          message: '点数不足，请购买点数或升级 Pro 订阅',
-          data: {
-            balance: userCredits.balance,
-            isPro: false
-          }
-        }, 403);
-      }
-      costType = 'credits';
-      creditsUsed = 1;
-    }
-
-    // 创建生成记录
-    const generation = createGeneration(
-      payload.userId,
-      templateId || 'custom',
-      templateName || '自定义生成',
-      inputData || { prompt }
-    );
 
     const startTime = Date.now();
 
@@ -630,7 +575,6 @@ app.post('/api/generate', async (c) => {
     const generationTimeMs = Date.now() - startTime;
 
     if (data.error) {
-      markGenerationFailed(generation.id, data.error.message || '生成失败');
       return c.json({ 
         success: false, 
         error: 'AI_ERROR', 
@@ -639,39 +583,10 @@ app.post('/api/generate', async (c) => {
     }
 
     const content = data.choices[0]?.message?.content || '无结果';
-    const tokensInput = data.usage?.prompt_tokens;
-    const tokensOutput = data.usage?.completion_tokens;
-
-    // 扣除点数（非订阅用户）
-    if (!isPro) {
-      deductCredits(
-        payload.userId, 
-        1, 
-        `${templateName || '自定义生成'}`,
-        generation.id
-      );
-    }
-
-    // 更新生成记录
-    updateGenerationResult(
-      generation.id,
-      content,
-      creditsUsed,
-      costType,
-      tokensInput,
-      tokensOutput,
-      generationTimeMs
-    );
 
     return c.json({ 
       success: true,
-      data: {
-        content,
-        generationId: generation.id,
-        creditsUsed,
-        costType,
-        balance: isPro ? null : userCredits.balance - (isPro ? 0 : 1)
-      }
+      content
     });
 
   } catch (error: any) {

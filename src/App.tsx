@@ -1,11 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GoogleOAuthProvider } from '@react-oauth/google';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { LoginPage } from './components/LoginPage';
-import { UserMenu } from './components/UserMenu';
-import { AccountPage } from './components/AccountPage';
-import { CreditsPage } from './components/CreditsPage';
 import { 
   templates,
   categoryNames,
@@ -18,34 +12,25 @@ import {
   getOptionLabel
 } from './lib/templates';
 import { Language, languageNames, translations } from './lib/i18n';
-import { authConfig, getApiUrl, TokenManager } from './lib/auth';
+import { getApiUrl } from './lib/auth';
 
 // Page types
-type PageType = 'home' | 'workspace' | 'account' | 'credits';
+type PageType = 'home' | 'workspace';
 
 // ============================================
-// Header
+// Header - 免费版本，无登录
 // ============================================
 function Header({ 
   lang, 
   onLangChange, 
   onBack, 
-  page,
-  onLogin,
-  onAccount,
-  onCredits,
-  creditBalance
+  page
 }: { 
   lang: Language; 
   onLangChange: (lang: Language) => void;
   onBack?: () => void;
   page: PageType;
-  onLogin?: () => void;
-  onAccount?: () => void;
-  onCredits?: () => void;
-  creditBalance?: number | null;
 }) {
-  const { user, isAuthenticated, logout } = useAuth();
   const t = translations[lang];
   
   return (
@@ -78,27 +63,6 @@ function Header({
               <option key={code} value={code}>{name}</option>
             ))}
           </select>
-          
-          {/* 点数余额 + 购买按钮（登录用户可见） */}
-          {isAuthenticated && (
-            <div className="credits-section">
-              <button onClick={onAccount} className="credit-balance-btn">
-                <span className="credit-icon">💎</span>
-                <span>{creditBalance ?? 0}</span>
-              </button>
-              <button onClick={onCredits} className="buy-credits-header-btn">
-                {lang === 'zh' ? '购买点数' : 'Buy Credits'}
-              </button>
-            </div>
-          )}
-          
-          {isAuthenticated ? (
-            <UserMenu onLogout={logout} onAccount={onAccount} onBuyCredits={onCredits} />
-          ) : (
-            <button onClick={onLogin} className="login-btn">
-              {t.login}
-            </button>
-          )}
         </div>
       </div>
     </header>
@@ -183,20 +147,17 @@ function TemplateGrid({ lang, onSelect }: { lang: Language; onSelect: (t: Templa
 }
 
 // ============================================
-// Workspace - 工作台
+// Workspace - 工作台（免费版本）
 // ============================================
 function Workspace({ 
   template, 
   lang, 
-  onBack,
-  onLogin 
+  onBack
 }: { 
   template: Template; 
   lang: Language;
   onBack: () => void;
-  onLogin: () => void;
 }) {
-  const { isAuthenticated } = useAuth();
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
@@ -226,13 +187,7 @@ function Workspace({
   };
 
   const handleGenerate = async () => {
-    // 检查登录状态
-    if (!isAuthenticated) {
-      setError(lang === 'zh' ? '请先登录后再生成内容' : 'Please login to generate content');
-      setTimeout(() => onLogin(), 1500);
-      return;
-    }
-
+    // 免费版本：直接生成，不需要登录
     const missingFields = template.variables
       .filter((v) => v.required && !formData[v.name])
       .map((v) => getVariableLabel(v, lang));
@@ -247,24 +202,15 @@ function Workspace({
     setResult('');
 
     try {
-      const token = TokenManager.getAccessToken();
       const response = await fetch(getApiUrl('/api/generate'), {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify({ prompt: generatePrompt() }),
       });
 
       const data = await response.json();
-      
-      // 处理未授权错误
-      if (response.status === 401) {
-        setError(lang === 'zh' ? '登录已过期，请重新登录' : 'Session expired, please login again');
-        setTimeout(() => onLogin(), 1500);
-        return;
-      }
       
       if (data.error) {
         setError(data.message || data.error);
@@ -297,17 +243,6 @@ function Workspace({
             <span className="form-icon">{template.icon}</span>
             <h2 className="form-title">{getTemplateName(template, lang)}</h2>
           </div>
-          
-          {/* 未登录提示 */}
-          {!isAuthenticated && (
-            <div className="login-banner" onClick={onLogin}>
-              <span className="login-banner-icon">🔐</span>
-              <span className="login-banner-text">
-                {lang === 'zh' ? '点击登录后即可生成内容' : 'Login to generate content'}
-              </span>
-              <span className="login-banner-arrow">→</span>
-            </div>
-          )}
           
           <div className="form-body">
             {template.variables.map((field) => (
@@ -451,43 +386,12 @@ function Particles() {
 }
 
 // ============================================
-// Main App Content
+// Main App Content - 免费版本，无需登录
 // ============================================
-function AppContent({ onLogin }: { onLogin: () => void }) {
-  const { isAuthenticated } = useAuth();
+function AppContent() {
   const [lang, setLang] = useState<Language>('en');
   const [page, setPage] = useState<PageType>('home');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
-  const [creditBalance, setCreditBalance] = useState<number | null>(null);
-
-  // 获取点数余额
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchCreditBalance();
-    } else {
-      setCreditBalance(null);
-    }
-  }, [isAuthenticated]);
-
-  const fetchCreditBalance = async () => {
-    try {
-      const token = TokenManager.getAccessToken();
-      if (!token) return;
-      
-      const response = await fetch(getApiUrl('/api/credits/balance'), {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      const data = await response.json();
-      if (data.success && data.data) {
-        setCreditBalance(data.data.balance);
-      }
-    } catch (err) {
-      console.error('Failed to fetch credit balance:', err);
-    }
-  };
 
   const handleSelectTemplate = (template: Template) => {
     setSelectedTemplate(template);
@@ -499,19 +403,6 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
     setSelectedTemplate(null);
   };
 
-  const handleAccount = () => {
-    setPage('account');
-  };
-
-  const handleCredits = () => {
-    setPage('credits');
-  };
-
-  const handleCreditsSuccess = () => {
-    fetchCreditBalance();
-    setPage('account');
-  };
-
   return (
     <>
       <Particles />
@@ -520,44 +411,12 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
         onLangChange={setLang} 
         onBack={handleBack}
         page={page}
-        onLogin={onLogin}
-        onAccount={handleAccount}
-        onCredits={handleCredits}
-        creditBalance={creditBalance}
       />
       
       <main className="main">
         <div className="main-inner">
           <AnimatePresence mode="wait">
-            {page === 'account' ? (
-              <motion.div
-                key="account"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <AccountPage 
-                  lang={lang} 
-                  onBack={handleBack}
-                  onBuyCredits={handleCredits}
-                  creditBalance={creditBalance}
-                  onBalanceUpdate={fetchCreditBalance}
-                />
-              </motion.div>
-            ) : page === 'credits' ? (
-              <motion.div
-                key="credits"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <CreditsPage 
-                  lang={lang} 
-                  onBack={handleBack}
-                  onSuccess={handleCreditsSuccess}
-                />
-              </motion.div>
-            ) : page === 'workspace' && selectedTemplate ? (
+            {page === 'workspace' && selectedTemplate ? (
               <motion.div
                 key="workspace"
                 initial={{ opacity: 0 }}
@@ -568,7 +427,6 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
                   template={selectedTemplate} 
                   lang={lang}
                   onBack={handleBack}
-                  onLogin={onLogin}
                 />
               </motion.div>
             ) : (
@@ -589,41 +447,14 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
 }
 
 // ============================================
-// App
+// App - 免费版本
 // ============================================
 function App() {
-  const { isAuthenticated, isLoading } = useAuth();
-  const [showLogin, setShowLogin] = useState(false);
-
-  if (isLoading) {
-    return (
-      <div className="loading-screen">
-        <div className="loading-spinner" />
-      </div>
-    );
-  }
-
-  if (showLogin && !isAuthenticated) {
-    return (
-      <GoogleOAuthProvider clientId={authConfig.googleClientId || ''}>
-        <LoginPage onSuccess={() => setShowLogin(false)} />
-      </GoogleOAuthProvider>
-    );
-  }
-
-  return (
-    <GoogleOAuthProvider clientId={authConfig.googleClientId || ''}>
-      <AppContent onLogin={() => setShowLogin(true)} />
-    </GoogleOAuthProvider>
-  );
+  return <AppContent />;
 }
 
 function AppWrapper() {
-  return (
-    <AuthProvider>
-      <App />
-    </AuthProvider>
-  );
+  return <App />;
 }
 
 export default AppWrapper;

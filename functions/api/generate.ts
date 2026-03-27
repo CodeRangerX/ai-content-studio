@@ -1,79 +1,25 @@
-// Cloudflare Pages Function - 免费版本，直接调用 AI API
-// 前端请求 /api/generate -> Cloudflare Function -> DeepSeek API
+// Cloudflare Pages Function - 代理到 Railway 后端
+// 前端请求 /api/generate -> Cloudflare Function -> Railway 后端
 
-const API_CONFIG = {
-  baseUrl: 'https://api.deepseek.com',
-  model: 'deepseek-reasoner',
-};
+const RAILWAY_BACKEND = 'https://ai-content-studio-production-f3a4.up.railway.app';
 
 export async function onRequestPost(context: any) {
   try {
     const body = await context.request.json();
-    const { prompt } = body;
 
-    if (!prompt) {
-      return new Response(JSON.stringify({ 
-        success: false,
-        error: 'BAD_REQUEST', 
-        message: '请输入内容' 
-      }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    // 从环境变量获取 API Key
-    const apiKey = context.env?.DEEPSEEK_API_KEY || '';
-
-    if (!apiKey) {
-      return new Response(JSON.stringify({ 
-        success: false,
-        error: 'CONFIG_ERROR', 
-        message: 'API 配置错误' 
-      }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    const startTime = Date.now();
-
-    // 直接调用 DeepSeek API
-    const response = await fetch(`${API_CONFIG.baseUrl}/v1/chat/completions`, {
+    // 免费版本：不需要 Authorization
+    const response = await fetch(`${RAILWAY_BACKEND}/api/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model: API_CONFIG.model,
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 4000,
-      }),
+      body: JSON.stringify(body),
     });
 
     const data = await response.json();
-    const generationTimeMs = Date.now() - startTime;
 
-    if (data.error) {
-      return new Response(JSON.stringify({ 
-        success: false,
-        error: 'AI_ERROR', 
-        message: data.error.message || '生成失败' 
-      }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    const content = data.choices[0]?.message?.content || '无结果';
-
-    return new Response(JSON.stringify({ 
-      success: true,
-      content,
-      generationTimeMs
-    }), {
-      status: 200,
+    return new Response(JSON.stringify(data), {
+      status: response.status,
       headers: { 
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
@@ -81,7 +27,6 @@ export async function onRequestPost(context: any) {
     });
 
   } catch (error: any) {
-    console.error('Generate error:', error);
     return new Response(JSON.stringify({ 
       success: false,
       error: 'SERVICE_ERROR', 

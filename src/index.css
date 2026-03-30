@@ -2619,76 +2619,14 @@ body {
   color: rgba(245, 243, 239, 0.9);
 }
 
-/* 账单快速入口卡片 */
-.bills-quick-card {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: flex;
-  -webkit-box-align: center;
-  -webkit-align-items: center;
-  align-items: center;
-  gap: 16px;
-  background: linear-gradient(135deg, rgba(196, 160, 82, 0.15) 0%, rgba(160, 128, 64, 0.1) 100%);
-  border: 1px solid rgba(196, 160, 82, 0.3);
-  border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 24px;
-  cursor: pointer;
-  -webkit-transition: all 0.2s;
-  transition: all 0.2s;
-}
-
-.bills-quick-card:hover {
-  background: linear-gradient(135deg, rgba(196, 160, 82, 0.25) 0%, rgba(160, 128, 64, 0.15) 100%);
-  border-color: rgba(196, 160, 82, 0.5);
-  -webkit-transform: translateY(-2px);
-  transform: translateY(-2px);
-}
-
-.bills-quick-icon {
-  font-size: 32px;
-  background: rgba(196, 160, 82, 0.2);
-  width: 56px;
-  height: 56px;
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: flex;
-  -webkit-box-align: center;
-  -webkit-align-items: center;
-  align-items: center;
-  -webkit-box-pack: center;
-  -webkit-justify-content: center;
-  justify-content: center;
-  border-radius: 12px;
-}
-
-.bills-quick-content {
-  -webkit-box-flex: 1;
-  -webkit-flex: 1;
-  flex: 1;
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: flex;
-  -webkit-box-orient: vertical;
-  -webkit-flex-direction: column;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.bills-quick-title {
-  font-size: 16px;
+/* 账单 Tab 醒目样式 */
+.account-tabs-v2 button.bills-tab-highlight {
   font-weight: 600;
-  color: #f5f3ef;
 }
 
-.bills-quick-sub {
-  font-size: 13px;
-  color: rgba(245, 243, 239, 0.6);
-}
-
-.bills-quick-arrow {
-  font-size: 20px;
-  color: #c4a052;
+.account-tabs-v2 button.bills-tab-highlight.active {
+  background: linear-gradient(135deg, rgba(196, 160, 82, 0.25) 0%, rgba(160, 128, 64, 0.15) 100%);
+  border: 1px solid rgba(196, 160, 82, 0.4);
 }
 
 /* 使用记录列表 */

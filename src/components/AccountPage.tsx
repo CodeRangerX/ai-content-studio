@@ -116,7 +116,7 @@ const labels = {
 };
 
 export function AccountPage({ lang, onBack, onBuyCredits, creditBalance, onBalanceUpdate }: AccountPageProps) {
-  const [activeTab, setActiveTab] = useState<'usage' | 'bills'>('bills');  // 默认显示账单
+  const [activeTab, setActiveTab] = useState<'usage' | 'bills'>('usage');  // 默认显示使用记录
   
   const t = labels[lang] || labels.zh;
 
@@ -144,29 +144,19 @@ export function AccountPage({ lang, onBack, onBuyCredits, creditBalance, onBalan
         </button>
       </div>
 
-      {/* 账单快速入口卡片 */}
-      <div className="bills-quick-card" onClick={() => setActiveTab('bills')}>
-        <div className="bills-quick-icon">💳</div>
-        <div className="bills-quick-content">
-          <span className="bills-quick-title">{lang === 'zh' ? '查看账单与购买记录' : 'View Bills & Purchases'}</span>
-          <span className="bills-quick-sub">{lang === 'zh' ? '点击查看消费明细' : 'Click to view details'}</span>
-        </div>
-        <div className="bills-quick-arrow">→</div>
-      </div>
-
       {/* Tabs */}
       <div className="account-tabs-v2">
-        <button 
-          className={activeTab === 'bills' ? 'active' : ''} 
-          onClick={() => setActiveTab('bills')}
-        >
-          💳 {t.tabBills}
-        </button>
         <button 
           className={activeTab === 'usage' ? 'active' : ''} 
           onClick={() => setActiveTab('usage')}
         >
           📝 {t.tabUsage}
+        </button>
+        <button 
+          className={activeTab === 'bills' ? 'active bills-tab-highlight' : 'bills-tab-highlight'} 
+          onClick={() => setActiveTab('bills')}
+        >
+          💳 {t.tabBills}
         </button>
       </div>
 

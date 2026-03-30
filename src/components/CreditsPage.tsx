@@ -187,10 +187,6 @@ export function CreditsPage({ lang, onBack, onSuccess }: CreditsPageProps) {
                 {formatPrice(pkg.price)}
               </div>
 
-              <div className="price-per-point">
-                ≈ {((pkg.price / 100) / pkg.points * 100).toFixed(1)}¢/{t.points}
-              </div>
-
               <button
                 onClick={() => handlePurchase(id)}
                 disabled={!!processing || !isAuthenticated}

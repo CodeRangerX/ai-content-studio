@@ -116,7 +116,7 @@ const labels = {
 };
 
 export function AccountPage({ lang, onBack, onBuyCredits, creditBalance, onBalanceUpdate }: AccountPageProps) {
-  const [activeTab, setActiveTab] = useState<'usage' | 'bills'>('usage');
+  const [activeTab, setActiveTab] = useState<'usage' | 'bills'>('bills');  // 默认显示账单
   
   const t = labels[lang] || labels.zh;
 
@@ -144,19 +144,29 @@ export function AccountPage({ lang, onBack, onBuyCredits, creditBalance, onBalan
         </button>
       </div>
 
+      {/* 账单快速入口卡片 */}
+      <div className="bills-quick-card" onClick={() => setActiveTab('bills')}>
+        <div className="bills-quick-icon">💳</div>
+        <div className="bills-quick-content">
+          <span className="bills-quick-title">{lang === 'zh' ? '查看账单与购买记录' : 'View Bills & Purchases'}</span>
+          <span className="bills-quick-sub">{lang === 'zh' ? '点击查看消费明细' : 'Click to view details'}</span>
+        </div>
+        <div className="bills-quick-arrow">→</div>
+      </div>
+
       {/* Tabs */}
       <div className="account-tabs-v2">
-        <button 
-          className={activeTab === 'usage' ? 'active' : ''} 
-          onClick={() => setActiveTab('usage')}
-        >
-          {t.tabUsage}
-        </button>
         <button 
           className={activeTab === 'bills' ? 'active' : ''} 
           onClick={() => setActiveTab('bills')}
         >
-          {t.tabBills}
+          💳 {t.tabBills}
+        </button>
+        <button 
+          className={activeTab === 'usage' ? 'active' : ''} 
+          onClick={() => setActiveTab('usage')}
+        >
+          📝 {t.tabUsage}
         </button>
       </div>
 
@@ -246,11 +256,7 @@ function UsageRecordsList({ lang }: { lang: Language }) {
               </div>
               <div className="usage-item-meta">
                 <span className="usage-time">{formatTime(r.created_at)}</span>
-                <span className="usage-cost">
-                  {r.cost_type === 'subscription' 
-                    ? (lang === 'zh' ? '订阅' : 'Sub') 
-                    : `-${r.credits_used} ${t.points}`}
-                </span>
+                <span className="usage-cost">-{r.credits_used} {t.points}</span>
               </div>
             </div>
           ))}
@@ -283,9 +289,7 @@ function UsageRecordsList({ lang }: { lang: Language }) {
               </div>
               <div className="detail-row">
                 <span className="detail-label">{t.costPoints}</span>
-                <span>{selected.cost_type === 'subscription' 
-                  ? (lang === 'zh' ? '订阅用户' : 'Subscription') 
-                  : `${selected.credits_used} ${t.points}`}</span>
+                <span>-{selected.credits_used} {t.points}</span>
               </div>
               {selected.generation_time_ms && (
                 <div className="detail-row">

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   templates,
@@ -13,6 +13,9 @@ import {
 } from './lib/templates';
 import { Language, languageNames, translations } from './lib/i18n';
 
+// 后端 API 地址
+const API_URL = 'https://ai-content-studio-production-f3a4.up.railway.app';
+
 // ============================================
 // Header
 // ============================================
@@ -20,14 +23,12 @@ function Header({
   lang, 
   onLangChange, 
   onBack, 
-  page,
-  onConfig
+  page
 }: { 
   lang: Language; 
   onLangChange: (lang: Language) => void;
   onBack?: () => void;
   page: 'home' | 'workspace';
-  onConfig: () => void;
 }) {
   const t = translations[lang];
   
@@ -61,125 +62,9 @@ function Header({
               <option key={code} value={code}>{name}</option>
             ))}
           </select>
-          
-          <button onClick={onConfig} className="config-btn">
-            ⚙️ API
-          </button>
         </div>
       </div>
     </header>
-  );
-}
-
-// ============================================
-// Config Modal - API 配置
-// ============================================
-function ConfigModal({ 
-  lang, 
-  onClose,
-  onSave
-}: { 
-  lang: Language;
-  onClose: () => void;
-  onSave: () => void;
-}) {
-  const [apiKey, setApiKey] = useState('');
-  const [baseUrl, setBaseUrl] = useState('https://api.deepseek.com/v1');
-  const [model, setModel] = useState('deepseek-chat');
-
-  useEffect(() => {
-    setApiKey(localStorage.getItem('apiKey') || '');
-    setBaseUrl(localStorage.getItem('baseUrl') || 'https://api.deepseek.com/v1');
-    setModel(localStorage.getItem('model') || 'deepseek-chat');
-  }, []);
-
-  const handleSave = () => {
-    localStorage.setItem('apiKey', apiKey);
-    localStorage.setItem('baseUrl', baseUrl);
-    localStorage.setItem('model', model);
-    onSave();
-    onClose();
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="modal-overlay"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="modal-content"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="modal-title">
-          {lang === 'zh' ? 'API 配置' : 'API Configuration'}
-        </h2>
-        
-        <div className="modal-body">
-          <div className="form-field">
-            <label className="form-label">
-              API Key *
-            </label>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="sk-..."
-              className="form-input"
-            />
-          </div>
-          
-          <div className="form-field">
-            <label className="form-label">
-              {lang === 'zh' ? 'API 地址' : 'API Base URL'}
-            </label>
-            <input
-              type="text"
-              value={baseUrl}
-              onChange={(e) => setBaseUrl(e.target.value)}
-              className="form-input"
-            />
-          </div>
-          
-          <div className="form-field">
-            <label className="form-label">
-              {lang === 'zh' ? '模型' : 'Model'}
-            </label>
-            <select
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              className="form-select"
-            >
-              <option value="deepseek-chat">deepseek-chat</option>
-              <option value="deepseek-reasoner">deepseek-reasoner</option>
-            </select>
-          </div>
-          
-          <p className="config-hint">
-            {lang === 'zh' 
-              ? '推荐使用 DeepSeek API，便宜好用'
-              : 'Recommended: DeepSeek API - affordable and powerful'}
-            <a href="https://platform.deepseek.com" target="_blank" rel="noopener noreferrer" className="config-link">
-              platform.deepseek.com
-            </a>
-          </p>
-        </div>
-        
-        <div className="modal-footer">
-          <button onClick={onClose} className="btn-secondary">
-            {lang === 'zh' ? '取消' : 'Cancel'}
-          </button>
-          <button onClick={handleSave} className="btn-primary">
-            {lang === 'zh' ? '保存' : 'Save'}
-          </button>
-        </div>
-      </motion.div>
-    </motion.div>
   );
 }
 
@@ -265,13 +150,11 @@ function TemplateGrid({ lang, onSelect }: { lang: Language; onSelect: (t: Templa
 function Workspace({ 
   template, 
   lang, 
-  onBack,
-  onConfig 
+  onBack 
 }: { 
   template: Template; 
   lang: Language;
   onBack: () => void;
-  onConfig: () => void;
 }) {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [result, setResult] = useState('');
@@ -282,14 +165,9 @@ function Workspace({
   
   const t = translations[lang];
 
-  useEffect(() => {
-    if (result && resultRef.current) {
-      resultRef.current.scrollTop = resultRef.current.scrollHeight;
-    }
-  }, [result]);
-
   const handleFormChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setError('');
   };
 
   const generatePrompt = () => {
@@ -302,16 +180,6 @@ function Workspace({
   };
 
   const handleGenerate = async () => {
-    const apiKey = localStorage.getItem('apiKey');
-    const baseUrl = localStorage.getItem('baseUrl') || 'https://api.deepseek.com/v1';
-    const model = localStorage.getItem('model') || 'deepseek-chat';
-    
-    if (!apiKey) {
-      setError(lang === 'zh' ? '请先配置 API Key' : 'Please configure your API Key first');
-      setTimeout(() => onConfig(), 1500);
-      return;
-    }
-
     const missingFields = template.variables
       .filter((v) => v.required && !formData[v.name])
       .map((v) => getVariableLabel(v, lang));
@@ -326,28 +194,21 @@ function Workspace({
     setResult('');
 
     try {
-      const response = await fetch(`${baseUrl}/chat/completions`, {
+      const response = await fetch(`${API_URL}/api/generate`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: [{ role: 'user', content: generatePrompt() }],
-          max_tokens: 2000,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: generatePrompt() }),
       });
 
       const data = await response.json();
       
       if (data.error) {
-        setError(data.error.message || (lang === 'zh' ? '生成失败' : 'Generation failed'));
+        setError(data.message || (lang === 'zh' ? '生成失败' : 'Generation failed'));
       } else {
-        setResult(data.choices[0]?.message?.content || (lang === 'zh' ? '无结果' : 'No result'));
+        setResult(data.content || (lang === 'zh' ? '无结果' : 'No result'));
       }
-    } catch (err: any) {
-      setError(lang === 'zh' ? '网络错误，请检查 API 配置' : 'Network error, please check API config');
+    } catch {
+      setError(lang === 'zh' ? '网络错误，请稍后重试' : 'Network error, please try again');
     } finally {
       setLoading(false);
     }
@@ -521,8 +382,6 @@ function App() {
   const [lang, setLang] = useState<Language>('en');
   const [page, setPage] = useState<'home' | 'workspace'>('home');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
-  const [showConfig, setShowConfig] = useState(false);
-  const [configSaved, setConfigSaved] = useState(false);
 
   const handleSelectTemplate = (template: Template) => {
     setSelectedTemplate(template);
@@ -534,10 +393,6 @@ function App() {
     setSelectedTemplate(null);
   };
 
-  const handleConfigSave = () => {
-    setConfigSaved(true);
-  };
-
   return (
     <>
       <Particles />
@@ -546,7 +401,6 @@ function App() {
         onLangChange={setLang} 
         onBack={handleBack}
         page={page}
-        onConfig={() => setShowConfig(true)}
       />
       
       <main className="main">
@@ -563,7 +417,6 @@ function App() {
                   template={selectedTemplate} 
                   lang={lang}
                   onBack={handleBack}
-                  onConfig={() => setShowConfig(true)}
                 />
               </motion.div>
             ) : (
@@ -579,16 +432,6 @@ function App() {
           </AnimatePresence>
         </div>
       </main>
-      
-      <AnimatePresence>
-        {showConfig && (
-          <ConfigModal 
-            lang={lang}
-            onClose={() => setShowConfig(false)}
-            onSave={handleConfigSave}
-          />
-        )}
-      </AnimatePresence>
     </>
   );
 }

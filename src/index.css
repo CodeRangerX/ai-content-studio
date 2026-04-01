@@ -2471,6 +2471,25 @@ body {
 .buy-credits-header-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; -webkit-transition: all 0.2s; transition: all 0.2s; }
 .buy-credits-header-btn:hover { -webkit-transform: translateY(-1px); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
 
+.bills-header-btn { background: rgba(102, 126, 234, 0.15); border: 1px solid rgba(102, 126, 234, 0.3); color: #a5b4fc; padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; -webkit-transition: all 0.2s; transition: all 0.2s; }
+.bills-header-btn:hover { background: rgba(102, 126, 234, 0.25); border-color: rgba(102, 126, 234, 0.5); }
+
+/* Account Page 新样式 */
+.credits-unit { font-size: 14px; color: rgba(245, 243, 239, 0.5); margin-left: 8px; }
+.credits-actions { display: -webkit-box; display: -webkit-flex; display: flex; gap: 12px; }
+.view-bills-btn { background: rgba(102, 126, 234, 0.15); border: 1px solid rgba(102, 126, 234, 0.3); color: #a5b4fc; padding: 14px 20px; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; display: -webkit-box; display: -webkit-flex; display: flex; -webkit-box-align: center; -webkit-align-items: center; align-items: center; gap: 8px; -webkit-transition: all 0.2s; transition: all 0.2s; }
+.view-bills-btn:hover { background: rgba(102, 126, 234, 0.25); border-color: rgba(102, 126, 234, 0.5); }
+.usage-tip-card { background: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 12px; padding: 14px 20px; display: -webkit-box; display: -webkit-flex; display: flex; -webkit-box-align: center; -webkit-align-items: center; align-items: center; gap: 12px; margin-bottom: 24px; }
+.tip-icon { font-size: 18px; }
+.tip-text { color: #86efac; font-size: 14px; }
+.usage-section { margin-bottom: 32px; }
+.section-title { font-size: 18px; font-weight: 600; color: #f5f3ef; display: -webkit-box; display: -webkit-flex; display: flex; -webkit-box-align: center; -webkit-align-items: center; align-items: center; gap: 10px; margin-bottom: 16px; }
+.section-icon { font-size: 20px; }
+.usage-stats-mini { display: -webkit-box; display: -webkit-flex; display: flex; gap: 16px; }
+.stat-mini { display: -webkit-box; display: -webkit-flex; display: flex; -webkit-box-align: center; -webkit-align-items: center; align-items: center; gap: 8px; }
+.stat-mini-label { font-size: 13px; color: rgba(245, 243, 239, 0.5); }
+.stat-mini-value { font-size: 14px; font-weight: 600; color: #c4a052; }
+
 /* ============================================
    新版账户页面样式 V2 - 简洁大方
    ============================================ */

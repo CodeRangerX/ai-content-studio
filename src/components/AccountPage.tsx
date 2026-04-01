@@ -8,6 +8,7 @@ interface AccountPageProps {
   lang: Language;
   onBack: () => void;
   onBuyCredits: () => void;
+  onViewBills: () => void;
   creditBalance?: number | null;
   onBalanceUpdate?: () => void;
 }
@@ -45,6 +46,7 @@ const labels = {
     back: '返回',
     credits: '点数余额',
     buyCredits: '购买点数',
+    viewBills: '查看账单',
     
     // 使用记录
     usageRecords: '使用记录',
@@ -63,26 +65,17 @@ const labels = {
     noData: '暂无记录',
     loading: '加载中...',
     
-    // 账单
-    bills: '账单',
-    billAmount: '金额',
-    billTime: '时间',
-    billStatus: '状态',
-    billPending: '处理中',
-    billCompleted: '已完成',
-    billFailed: '失败',
-    pointsPurchase: '购买点数',
+    // 其他
     points: '点',
-    
-    // Tabs
-    tabUsage: '使用记录',
-    tabBills: '账单',
+    totalUsed: '累计消耗',
+    usageTip: '每次生成消耗 1 点',
   },
   en: {
     title: 'My Account',
     back: 'Back',
     credits: 'Credits',
     buyCredits: 'Buy Credits',
+    viewBills: 'View Bills',
     
     usageRecords: 'Usage Records',
     costPoints: 'Used',
@@ -100,24 +93,13 @@ const labels = {
     noData: 'No records',
     loading: 'Loading...',
     
-    bills: 'Bills',
-    billAmount: 'Amount',
-    billTime: 'Time',
-    billStatus: 'Status',
-    billPending: 'Pending',
-    billCompleted: 'Completed',
-    billFailed: 'Failed',
-    pointsPurchase: 'Points Purchase',
     points: 'pts',
-    
-    tabUsage: 'Usage',
-    tabBills: 'Bills',
+    totalUsed: 'Total Used',
+    usageTip: '1 credit per generation',
   },
 };
 
-export function AccountPage({ lang, onBack, onBuyCredits, creditBalance, onBalanceUpdate }: AccountPageProps) {
-  const [activeTab, setActiveTab] = useState<'usage' | 'bills'>('usage');  // 默认显示使用记录
-  
+export function AccountPage({ lang, onBack, onBuyCredits, onViewBills, creditBalance, onBalanceUpdate }: AccountPageProps) {
   const t = labels[lang] || labels.zh;
 
   return (
@@ -137,32 +119,34 @@ export function AccountPage({ lang, onBack, onBuyCredits, creditBalance, onBalan
         <div className="credits-info">
           <span className="credits-label">{t.credits}</span>
           <span className="credits-value">{creditBalance ?? 0}</span>
+          <span className="credits-unit">{t.points}</span>
         </div>
-        <button onClick={onBuyCredits} className="buy-credits-main-btn">
-          <span>💎</span>
-          <span>{t.buyCredits}</span>
-        </button>
+        <div className="credits-actions">
+          <button onClick={onBuyCredits} className="buy-credits-main-btn">
+            <span>💎</span>
+            <span>{t.buyCredits}</span>
+          </button>
+          <button onClick={onViewBills} className="view-bills-btn">
+            <span>💳</span>
+            <span>{t.viewBills}</span>
+          </button>
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="account-tabs-v2">
-        <button 
-          className={activeTab === 'usage' ? 'active' : ''} 
-          onClick={() => setActiveTab('usage')}
-        >
-          📝 {t.tabUsage}
-        </button>
-        <button 
-          className={activeTab === 'bills' ? 'active bills-tab-highlight' : 'bills-tab-highlight'} 
-          onClick={() => setActiveTab('bills')}
-        >
-          💳 {t.tabBills}
-        </button>
+      {/* 使用提示 */}
+      <div className="usage-tip-card">
+        <span className="tip-icon">💡</span>
+        <span className="tip-text">{t.usageTip}</span>
       </div>
 
-      {/* Content */}
-      {activeTab === 'usage' && <UsageRecordsList lang={lang} />}
-      {activeTab === 'bills' && <BillsList lang={lang} onBuyCredits={onBuyCredits} />}
+      {/* 使用记录 */}
+      <div className="usage-section">
+        <h2 className="section-title">
+          <span className="section-icon">📝</span>
+          {t.usageRecords}
+        </h2>
+        <UsageRecordsList lang={lang} />
+      </div>
     </motion.div>
   );
 }
@@ -314,85 +298,38 @@ function UsageRecordsList({ lang }: { lang: Language }) {
 }
 
 // ============================================
-// 账单列表
+// 使用统计组件
 // ============================================
-function BillsList({ lang, onBuyCredits }: { lang: Language; onBuyCredits: () => void }) {
+function UsageStats({ lang }: { lang: Language }) {
   const t = labels[lang] || labels.zh;
-  const [purchases, setPurchases] = useState<Purchase[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => { loadBills(); }, []);
-
-  const loadBills = async () => {
-    setLoading(true);
+  const [stats, setStats] = useState({ totalUsed: 0, thisMonth: 0 });
+  
+  useEffect(() => {
+    loadStats();
+  }, []);
+  
+  const loadStats = async () => {
     try {
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-      const res = await fetch(getApiUrl('/api/credits/purchases'), {
+      const res = await fetch(getApiUrl('/api/stats'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
-      if (data.success) setPurchases(data.data || []);
+      if (data.success) {
+        setStats({
+          totalUsed: data.data?.credits?.totalUsed || 0,
+          thisMonth: data.data?.generations?.creditsUsed || 0
+        });
+      }
     } catch (e) { console.error(e); }
-    finally { setLoading(false); }
   };
-
-  const formatPrice = (cents: number) => `$${(cents/100).toFixed(2)}`;
-
-  const getStatusClass = (status: string) => {
-    switch (status) {
-      case 'completed': return 'status-success';
-      case 'pending': return 'status-pending';
-      default: return 'status-failed';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'completed': return t.billCompleted;
-      case 'pending': return t.billPending;
-      default: return t.billFailed;
-    }
-  };
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', {
-      year: 'numeric', month: 'short', day: 'numeric'
-    });
-  };
-
+  
   return (
-    <div className="bills-list">
-      {loading ? (
-        <div className="list-loading">{t.loading}</div>
-      ) : purchases.length === 0 ? (
-        <div className="list-empty">
-          <span className="empty-icon">💳</span>
-          <span>{t.noData}</span>
-          <button className="empty-action-btn" onClick={onBuyCredits}>{t.buyCredits}</button>
-        </div>
-      ) : (
-        <>
-          {purchases.map(p => (
-            <div key={p.id} className="bill-item">
-              <div className="bill-main">
-                <span className="bill-title">💎 {p.points} {t.points}</span>
-                <span className="bill-amount">{formatPrice(p.price)}</span>
-              </div>
-              <div className="bill-meta">
-                <span className="bill-date">{formatDate(p.created_at)}</span>
-                <span className={`bill-status ${getStatusClass(p.status)}`}>
-                  {getStatusLabel(p.status)}
-                </span>
-              </div>
-            </div>
-          ))}
-          
-          <button className="buy-more-btn" onClick={onBuyCredits}>
-            <span>💎</span>
-            <span>{t.buyCredits}</span>
-          </button>
-        </>
-      )}
+    <div className="usage-stats-mini">
+      <div className="stat-mini">
+        <span className="stat-mini-label">{t.totalUsed}</span>
+        <span className="stat-mini-value">{stats.totalUsed} {t.points}</span>
+      </div>
     </div>
   );
 }

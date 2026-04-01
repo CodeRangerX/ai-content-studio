@@ -317,11 +317,36 @@ const API_CONFIG = {
   model: process.env.DEEPSEEK_MODEL || 'kimi-k2.5'
 };
 
-// 生成内容 API（免费版本，无需登录）
+// 每次生成消耗的点数
+const CREDITS_PER_GENERATION = 1;
+
+// 生成内容 API（pro版本，需要登录并扣减点数）
 app.post('/api/generate', async (c) => {
+  // 验证登录
+  const authHeader = c.req.header('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ 
+      success: false, 
+      error: 'UNAUTHORIZED', 
+      message: '请先登录后再生成内容' 
+    }, 401);
+  }
+
+  const token = authHeader.slice(7);
+  const payload = verifyAccessToken(token);
+
+  if (!payload) {
+    return c.json({ 
+      success: false, 
+      error: 'INVALID_TOKEN', 
+      message: '登录已过期，请重新登录' 
+    }, 401);
+  }
+
   try {
     const body = await c.req.json();
-    const { prompt } = body;
+    const { prompt, templateId, templateName, inputData } = body;
 
     if (!prompt) {
       return c.json({ 
@@ -330,6 +355,25 @@ app.post('/api/generate', async (c) => {
         message: '请输入内容' 
       }, 400);
     }
+
+    // 检查点数余额
+    const credits = getOrCreateUserCredits(payload.userId);
+    if (credits.balance < CREDITS_PER_GENERATION) {
+      return c.json({ 
+        success: false, 
+        error: 'INSUFFICIENT_CREDITS', 
+        message: `点数不足，当前余额 ${credits.balance} 点，需要 ${CREDITS_PER_GENERATION} 点`,
+        balance: credits.balance
+      }, 402);
+    }
+
+    // 创建生成记录（初始状态为 pending）
+    const generation = createGeneration(
+      payload.userId,
+      templateId || 'custom',
+      templateName || '自定义生成',
+      inputData || { prompt }
+    );
 
     const startTime = Date.now();
 
@@ -351,18 +395,45 @@ app.post('/api/generate', async (c) => {
     const generationTimeMs = Date.now() - startTime;
 
     if (data.error) {
+      // 标记生成失败
+      markGenerationFailed(generation.id, data.error.message || '生成失败');
       return c.json({ 
         success: false, 
         error: 'AI_ERROR', 
-        message: data.error.message || '生成失败' 
+        message: data.error.message || '生成失败',
+        generationId: generation.id
       }, 500);
     }
 
     const content = data.choices[0]?.message?.content || '无结果';
+    const tokensInput = data.usage?.prompt_tokens || 0;
+    const tokensOutput = data.usage?.completion_tokens || 0;
+
+    // 扣减点数
+    const deductResult = deductCredits(
+      payload.userId,
+      CREDITS_PER_GENERATION,
+      `生成内容: ${templateName || '自定义'}`,
+      generation.id
+    );
+
+    // 更新生成记录
+    updateGenerationResult(
+      generation.id,
+      content,
+      CREDITS_PER_GENERATION,
+      'credits',
+      tokensInput,
+      tokensOutput,
+      generationTimeMs
+    );
 
     return c.json({ 
       success: true,
-      content
+      content,
+      generationId: generation.id,
+      creditsUsed: CREDITS_PER_GENERATION,
+      remainingBalance: deductResult.balance
     });
 
   } catch (error: any) {

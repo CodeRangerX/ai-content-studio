@@ -6,6 +6,7 @@ import { LoginPage } from './components/LoginPage';
 import { UserMenu } from './components/UserMenu';
 import { AccountPage } from './components/AccountPage';
 import { CreditsPage } from './components/CreditsPage';
+import { BillsPage } from './components/BillsPage';
 import { 
   templates,
   categoryNames,
@@ -21,7 +22,7 @@ import { Language, languageNames, translations } from './lib/i18n';
 import { authConfig, getApiUrl, TokenManager } from './lib/auth';
 
 // Page types
-type PageType = 'home' | 'workspace' | 'account' | 'credits';
+type PageType = 'home' | 'workspace' | 'account' | 'credits' | 'bills';
 
 // ============================================
 // Header
@@ -34,6 +35,7 @@ function Header({
   onLogin,
   onAccount,
   onCredits,
+  onBills,
   creditBalance
 }: { 
   lang: Language; 
@@ -43,6 +45,7 @@ function Header({
   onLogin?: () => void;
   onAccount?: () => void;
   onCredits?: () => void;
+  onBills?: () => void;
   creditBalance?: number | null;
 }) {
   const { user, isAuthenticated, logout } = useAuth();
@@ -79,12 +82,15 @@ function Header({
             ))}
           </select>
           
-          {/* 点数余额 + 购买按钮（登录用户可见） */}
+          {/* 点数余额 + 账单按钮 + 购买按钮（登录用户可见） */}
           {isAuthenticated && (
             <div className="credits-section">
               <button onClick={onAccount} className="credit-balance-btn">
                 <span className="credit-icon">💎</span>
                 <span>{creditBalance ?? 0}</span>
+              </button>
+              <button onClick={onBills} className="bills-header-btn">
+                {lang === 'zh' ? '账单' : 'Bills'}
               </button>
               <button onClick={onCredits} className="buy-credits-header-btn">
                 {lang === 'zh' ? '购买点数' : 'Buy Credits'}
@@ -254,7 +260,12 @@ function Workspace({
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
-        body: JSON.stringify({ prompt: generatePrompt() }),
+        body: JSON.stringify({
+          prompt: generatePrompt(),
+          templateId: template.id,
+          templateName: getTemplateName(template, lang),
+          inputData: formData
+        }),
       });
 
       const data = await response.json();
@@ -512,6 +523,10 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
     setPage('account');
   };
 
+  const handleBills = () => {
+    setPage('bills');
+  };
+
   return (
     <>
       <Particles />
@@ -523,6 +538,7 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
         onLogin={onLogin}
         onAccount={handleAccount}
         onCredits={handleCredits}
+        onBills={handleBills}
         creditBalance={creditBalance}
       />
       
@@ -540,6 +556,7 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
                   lang={lang} 
                   onBack={handleBack}
                   onBuyCredits={handleCredits}
+                  onViewBills={handleBills}
                   creditBalance={creditBalance}
                   onBalanceUpdate={fetchCreditBalance}
                 />
@@ -555,6 +572,19 @@ function AppContent({ onLogin }: { onLogin: () => void }) {
                   lang={lang} 
                   onBack={handleBack}
                   onSuccess={handleCreditsSuccess}
+                />
+              </motion.div>
+            ) : page === 'bills' ? (
+              <motion.div
+                key="bills"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <BillsPage 
+                  lang={lang} 
+                  onBack={handleBack}
+                  onBuyCredits={handleCredits}
                 />
               </motion.div>
             ) : page === 'workspace' && selectedTemplate ? (

@@ -422,7 +422,6 @@ app.post('/api/generate', async (c) => {
       generation.id,
       content,
       CREDITS_PER_GENERATION,
-      'credits',
       tokensInput,
       tokensOutput,
       generationTimeMs

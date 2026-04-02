@@ -36,18 +36,11 @@ export interface Generation {
   input_data: string;
   output_content: string | null;
   credits_used: number;
-  cost_type: 'subscription' | 'credits';
   status: 'success' | 'failed';
   created_at: string;
 }
 
 export interface UserStats {
-  isPro: boolean;
-  subscription: {
-    plan: string;
-    status: string;
-    currentPeriodEnd: string;
-  } | null;
   credits: {
     balance: number;
     totalPurchased: number;
@@ -57,7 +50,6 @@ export interface UserStats {
     totalThisMonth: number;
     byTemplate: Record<string, number>;
     creditsUsed: number;
-    subscriptionSaved: number;
   };
 }
 

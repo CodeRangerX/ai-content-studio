@@ -46,7 +46,6 @@ export interface Generation {
   input_data: string;
   output_content: string | null;
   credits_used: number;
-  cost_type: 'subscription' | 'credits';
   tokens_input: number | null;
   tokens_output: number | null;
   generation_time_ms: number | null;
@@ -273,8 +272,8 @@ export function createGeneration(
   
   run(
     `INSERT INTO generations 
-     (id, user_id, template_id, template_name, input_data, credits_used, cost_type, status)
-     VALUES (?, ?, ?, ?, ?, 0, 'subscription', 'pending')`,
+     (id, user_id, template_id, template_name, input_data, credits_used, status)
+     VALUES (?, ?, ?, ?, ?, 0, 'pending')`,
     [id, userId, templateId, templateName, JSON.stringify(inputData)]
   );
 
@@ -294,7 +293,6 @@ export function updateGenerationResult(
   id: string,
   outputContent: string,
   creditsUsed: number,
-  costType: 'subscription' | 'credits',
   tokensInput?: number,
   tokensOutput?: number,
   generationTimeMs?: number
@@ -303,13 +301,12 @@ export function updateGenerationResult(
     `UPDATE generations 
      SET output_content = ?, 
          credits_used = ?, 
-         cost_type = ?, 
          tokens_input = ?, 
          tokens_output = ?, 
          generation_time_ms = ?, 
          status = 'success'
      WHERE id = ?`,
-    [outputContent, creditsUsed, costType, tokensInput || null, tokensOutput || null, generationTimeMs || null, id]
+    [outputContent, creditsUsed, tokensInput || null, tokensOutput || null, generationTimeMs || null, id]
   );
 }
 
@@ -334,7 +331,6 @@ export function getUserGenerationStats(userId: string, days: number = 30): {
   total: number;
   byTemplate: Record<string, number>;
   creditsUsed: number;
-  subscriptionSaved: number;
 } {
   const since = new Date();
   since.setDate(since.getDate() - days);
@@ -357,7 +353,6 @@ export function getUserGenerationStats(userId: string, days: number = 30): {
     total: generations.length,
     byTemplate,
     creditsUsed,
-    subscriptionSaved: generations.filter(g => g.cost_type === 'subscription').length,
   };
 }
 

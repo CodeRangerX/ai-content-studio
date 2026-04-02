@@ -32,7 +32,6 @@ interface Generation {
   input_data: string;
   output_content: string | null;
   credits_used: number;
-  cost_type: 'subscription' | 'credits';
   status: 'success' | 'failed';
   tokens_input?: number;
   tokens_output?: number;

@@ -320,6 +320,61 @@ const API_CONFIG = {
 // 每次生成消耗的点数
 const CREDITS_PER_GENERATION = 1;
 
+// 免费版本生成 API（不需要登录）
+app.post('/api/generate/free', async (c) => {
+  try {
+    const body = await c.req.json();
+    const { prompt } = body;
+
+    if (!prompt) {
+      return c.json({ 
+        success: false, 
+        error: 'BAD_REQUEST', 
+        message: '请输入内容' 
+      }, 400);
+    }
+
+    // 调用 AI API
+    const response = await fetch(`${API_CONFIG.baseUrl}/v1/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_CONFIG.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: API_CONFIG.model,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 4000,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      return c.json({ 
+        success: false, 
+        error: 'AI_ERROR', 
+        message: data.error.message || '生成失败'
+      }, 500);
+    }
+
+    const content = data.choices[0]?.message?.content || '无结果';
+
+    return c.json({ 
+      success: true,
+      content
+    });
+
+  } catch (error: any) {
+    console.error('Free generate error:', error);
+    return c.json({ 
+      success: false, 
+      error: 'SERVER_ERROR', 
+      message: '服务暂时不可用，请稍后重试' 
+    }, 500);
+  }
+});
+
 // 生成内容 API（pro版本，需要登录并扣减点数）
 app.post('/api/generate', async (c) => {
   // 验证登录
